@@ -1,0 +1,624 @@
+
+
+export default Untitled1;
+
+// import React from "react";
+// import { useState, useEffect } from "react";
+// import ListItem from "@mui/material/ListItem";
+// import Divider from "@mui/material/Divider";
+// import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+// import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+// import Collapse from "@mui/material/Collapse";
+// import MenuIcon from "@mui/icons-material/Menu";
+// import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+// import LogoutIcon from "@mui/icons-material/Logout";
+// import "./Sidebar.css";
+// import {
+//   AppBar,
+//   Avatar,
+//   Box,
+//   Container,
+//   CssBaseline,
+//   Drawer,
+//   IconButton,
+//   List,
+//   Stack,
+//   Toolbar,
+//   Typography,
+// } from "@mui/material";
+// import assets from "../../assets";
+// import colorConfigs from "../../configs/colorConfigs";
+// import sizeConfigs from "../../configs/sizeConfigs";
+// import { useNavigate } from "react-router-dom";
+// import { Home } from "@mui/icons-material";
+// import PersonPinIcon from '@mui/icons-material/PersonPin';
+// import Menu from "@mui/material/Menu";
+// import MenuItem from "@mui/material/MenuItem";
+// import ListItemIcon from "@mui/material/ListItemIcon";
+// import Settings from "@mui/icons-material/Settings";
+// import TranslateIcon from '@mui/icons-material/Translate';
+// import { useTranslation } from 'react-i18next';
+// import call from "../../assets/images/phone-call.png";
+// import roles from "../../assets/images/role-model.png";
+// import tick from "../../assets/images/check-mark.png";
+// import crs from "../../assets/images/cross.png";
+// import log from "../../assets/images/profile.png";
+// import emails from "../../assets/images/gmail.png";
+// import genders from "../../assets/images/symbol.png";
+// import dobs from "../../assets/images/timetable.png";
+// import id from "../../assets/images/profile1.png";
+// import settings from "../../assets/images/settings.png";
+// import trans from "../../assets/images/translation.png";
+// import logout from "../../assets/images/logout.png";
+// import logged from "../../assets/images/permission.png";
+
+// import CloseIcon from '@mui/icons-material/Close';
+// import dayjs from 'dayjs';
+
+// const drawerWidth = 250;
+// function SidebarItem({
+//   depthStep = 10,
+//   depth = 0,
+//   expanded,
+//   item,
+//   ...rest
+// }: any) {
+//   const [collapsed, setCollapsed] = React.useState(true);
+//   const { label, items, Icon, onClick: onClickProp } = item;
+//   let navigate = useNavigate();
+
+//   const Logout = () => {
+//     localStorage.removeItem("userdata");
+//     navigate("/");
+//   };
+//   function toggleCollapse() {
+//     setCollapsed((prevValue) => !prevValue);
+//   }
+//   function onClick(e: any) {
+//     if (Array.isArray(items)) {
+//       toggleCollapse();
+//     }
+//     if (onClickProp) {
+//       onClickProp(e, item);
+//     }
+//   }
+//   let expandIcon;
+
+//   if (Array.isArray(items) && items.length) {
+//     expandIcon = !collapsed ? (
+//       <ExpandLessIcon
+//         className={
+//           "sidebar-item-expand-arrow" + " sidebar-item-expand-arrow-expanded"
+//         }
+//       />
+//     ) : (
+//       <ExpandMoreIcon className="sidebar-item-expand-arrow" />
+//     );
+//   }
+
+//   return (
+//     <>
+//       <ListItem
+//         style={{
+//           display: "flex",
+//           justifyContent: "space-between",
+//           alignItems: "center",
+//         }}
+//         // className="sidebar-item"
+//         onClick={onClick}
+//         button
+//         dense
+//         {...rest}
+//       >
+//         <div
+//           style={{
+//             paddingLeft: depth * depthStep,
+//             whiteSpace: "nowrap",
+//             //textOverflow:'ellipsis',
+//             //overflow:'hidden',
+//             display: "flex",
+//             alignItems: "center",
+//             width: "100%",
+//             fontSize: "16px",
+//             paddingBottom: "3px",
+//             fontFamily: "unset",
+//             overflowY: "revert-layer",
+//           }}
+//           className="sidebar-item-content"
+//         >
+//           {Icon && <Icon className="sidebar-item-icon" fontSize="small" />}
+//           <div className="sidebar-item-text">{label}</div>
+//         </div>
+//         {expandIcon}
+//       </ListItem>
+//       <Collapse in={!collapsed} timeout="auto" unmountOnExit>
+//         {Array.isArray(items) ? (
+//           <List disablePadding dense>
+//             {items.map((subItem, index) => (
+//               <React.Fragment key={`${subItem.name}${index}`}>
+//                 {subItem === "divider" ? (
+//                   <Divider style={{ margin: "6px 0" }} />
+//                 ) : (
+//                   <SidebarItem
+//                     depth={depth + 1}
+//                     depthStep={depthStep}
+//                     item={subItem}
+//                     expanded={undefined}
+//                   />
+//                 )}
+//               </React.Fragment>
+//             ))}
+//           </List>
+//         ) : null}
+//       </Collapse>
+//     </>
+//   );
+// }
+
+// const Sidebar = ({ items, depthStep, depth, expanded }: any) => {
+//   const [mobileOpen, setMobileOpen] = useState(false);
+//   const [userdrawerOpen, setUserdrawerOpen] = useState(false);
+
+//   const temporaryDrawerRef = React.useRef<HTMLDivElement>(null);
+
+//   const handleDrawerToggle = () => {
+//     setMobileOpen(!mobileOpen);
+//   };
+//   const Logout = () => {
+//     localStorage.removeItem("userdata");
+//     navigate("/");
+//   };
+//   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+
+//   const open = Boolean(anchorEl);
+
+//   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+//     setAnchorEl(event.currentTarget);
+//   };
+//   const handleClose = () => {
+//     setAnchorEl(null);
+//   };
+
+//   function onClick(e: any) {
+//     if (Array.isArray(items)) {
+//     }
+//   }
+//   let navigate = useNavigate();
+//   const routeChangeHome = () => {
+//     let path = `/home`;
+//     navigate(path);
+//   };
+//   var data = JSON.parse(localStorage.getItem("userdata")!);
+//   var menudata = data[0]["userdetail"];
+//   var username =
+//     menudata[0]["firsT_NAME"] +
+//     " " +
+//     menudata[0]["middlE_NAME"] +
+//     " " +
+//     menudata[0]["suR_NAME"];
+
+//   const { i18n } = useTranslation();
+
+//   const changeLanguage = (language:any) => {
+//     // console.log("check", language);
+
+//     i18n.changeLanguage(language);
+//     localStorage.setItem('preferredLanguage', language);
+//   };
+//   var currentLanguage = localStorage.getItem('preferredLanguage');
+//   var newLanguage = currentLanguage === 'hi' ? 'English' : 'हिंदी';
+
+//   const userData = JSON.parse(localStorage.getItem("userdata")!) || {};
+//   const userDetail = userData[0]?.userdetail || [];
+//   // console.log(userDetail);
+
+//   const getImageForFirstName = (
+//     firsT_NAME: any,
+//     middlE_NAME: any,
+//     suR_NAME: any
+//   ) => {
+//     const firstLetter = firsT_NAME ? firsT_NAME.charAt(0).toUpperCase() : "";
+//     const secondLetter = middlE_NAME ? middlE_NAME.charAt(0).toUpperCase() : "";
+//     const thirdLetter = suR_NAME ? suR_NAME.charAt(0).toUpperCase() : "";
+//     // console.log("fisrtlett", firstLetter);
+//     return `${firstLetter}${secondLetter}${thirdLetter}`;
+//   };
+
+//   const getGenderText = (gendeR_ID: any) => {
+//     switch (gendeR_ID) {
+//       case 1:
+//         return "Male";
+//       case 2:
+//         return "Female";
+//       case 3:
+//         return "Other";
+//       default:
+//         return "Unknown";
+//     }
+//   };
+
+//   return (
+//     <Box sx={{ display: "flex" }}>
+//       <AppBar
+//         style={{ background: "#FF7722", height: "12vh" }}
+//         position="fixed"
+//         sx={{
+//           width: { sm: `calc(100% - ${drawerWidth}px)` },
+//           ml: { sm: `${drawerWidth}px` },
+//         }}
+//       >
+//         <Toolbar style={{ justifyContent: "space-between" }}>
+//           <IconButton
+//             color="inherit"
+//             aria-label="open drawer"
+//             edge="start"
+//             onClick={handleDrawerToggle}
+//             sx={{ mr: 2, display: { sm: "none" } }}
+//           >
+//             <MenuIcon />
+//           </IconButton>
+//           <IconButton
+//             color="inherit"
+//             aria-label="open drawer"
+//             edge="start"
+//             onClick={handleDrawerToggle}
+//             sx={{ mr: 2, display: { sm: "none" } }}
+//           >
+//             <MenuIcon />
+//           </IconButton>
+//           <Typography variant="h5" noWrap component="div">
+//             Advertisement Management System
+//           </Typography>
+
+//           <IconButton
+//             onClick={handleClick}
+//             size="small"
+//             sx={{ ml: 2 }}
+//             aria-controls={open ? "account-menu" : undefined}
+//             aria-haspopup="true"
+//             aria-expanded={open ? "true" : undefined}
+//           >
+//             <Avatar sx={{ width: 32, height: 32 }}>
+//               {username[0].toUpperCase()}
+//             </Avatar>
+//           </IconButton>
+
+//           <Menu
+//             anchorEl={anchorEl}
+//             id="account-menu"
+//             open={open}
+//             // onClose={handleClose}
+//             onClick={handleClose}
+//             PaperProps={{
+//               elevation: 0,
+//               sx: {
+//                 overflow: "visible",
+//                 filter: "drop-shadow(0px 2px 8px rgba(0,0,0,0.32))",
+//                 paddingRight:"10px",
+//                 paddingLeft:"10px",
+//                 mt: 1.5,
+//                 "& .MuiAvatar-root": {
+//                   width: 32,
+//                   height: 32,
+//                   ml: -0.5,
+//                   mr: 1,
+//                 },
+//                 "&::before": {
+//                   content: '""',
+//                   display: "block",
+//                   position: "absolute",
+//                   top: 0,
+//                   right: 14,
+//                   width: 10,
+//                   height: 10,
+//                   bgcolor: "background.paper",
+//                   transform: "translateY(-50%) rotate(45deg)",
+//                   zIndex: 0,
+//                 },
+//               },
+//             }}
+//             transformOrigin={{ horizontal: "right", vertical: "top" }}
+//             anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+//           >
+//             <MenuItem onClick={handleClose}>
+//             <ListItemIcon><img src={logged} width={30} height={30} /></ListItemIcon> {username}
+//             </MenuItem>
+//             <MenuItem onClick={()=>setUserdrawerOpen(!userdrawerOpen)}>
+//             <ListItemIcon><img src={id} width={30} height={30} /></ListItemIcon>
+//               My Profile
+//             </MenuItem>
+
+//             <Divider />
+
+//             <MenuItem onClick={()=>{localStorage.getItem('preferredLanguage')=="hi"?changeLanguage("en"):changeLanguage("hi")}}>
+//               <ListItemIcon>
+//               <img src={trans} width={30} height={30} />
+//               </ListItemIcon>
+//               Translate -- {newLanguage}
+//             </MenuItem>
+//             <MenuItem onClick={handleClose}>
+//               <ListItemIcon>
+//               <img src={settings} width={30} height={30} />
+//               </ListItemIcon>
+//               Settings
+//             </MenuItem>
+//             <Divider/>
+//             <MenuItem onClick={Logout}>
+//               <ListItemIcon>
+//               <img src={logout} width={30} height={30} />
+//               </ListItemIcon>
+//               Logout
+//             </MenuItem>
+//           </Menu>
+//         </Toolbar>
+
+//       </AppBar>
+//       <Drawer
+//         variant="temporary"
+//         open={mobileOpen}
+//         onClose={handleDrawerToggle}
+//         ModalProps={{
+//           keepMounted: true,
+//         }}
+
+//         sx={{
+//           display: { xs: "block", sm: "none" },
+//           width: sizeConfigs.sidebar.width,
+//           flexShrink: 0,
+//           "& .MuiDrawer-paper": {
+//             width: sizeConfigs.sidebar.width,
+//             boxSizing: "border-box",
+//             borderRight: "0px",
+//             backgroundColor: colorConfigs.sidebar.bg,
+//             color: colorConfigs.sidebar.color,
+//           },
+//         }}
+//       >
+//         <List disablePadding>
+//           <List disablePadding dense style={{ marginTop: "2vh" }}>
+//             {items.map((sidebarItem: any, index: any) => (
+//               <React.Fragment key={`${sidebarItem.name}${index}`}>
+//                 {sidebarItem === "divider" ? (
+//                   <Divider style={{ margin: "6px 0" }} />
+//                 ) : (
+//                   <SidebarItem
+//                     depthStep={depthStep}
+//                     depth={depth}
+//                     expanded={expanded}
+//                     item={sidebarItem}
+//                   />
+//                 )}
+//               </React.Fragment>
+//             ))}
+//           </List>
+//         </List>
+//       </Drawer>
+//       <Drawer
+//         variant="permanent"
+//         open
+
+//         sx={{
+//           display: { xs: "none", sm: "block" },
+//           width: sizeConfigs.sidebar.width,
+//           flexShrink: 0,
+//           "& .MuiDrawer-paper": {
+//             width: sizeConfigs.sidebar.width,
+//             boxSizing: "border-box",
+//             borderRight: "0px",
+//             backgroundColor: "#331a00",
+//             color: colorConfigs.sidebar.color,
+//           },
+//         }}
+//       >
+//         <Toolbar >
+//           <Stack sx={{ width: "100%" }} direction="row" justifyContent="center">
+//             <Avatar
+//               src={assets.images.logo}
+//               style={{ height: 80, width: 80, marginTop: "25px", marginBottom: "25px" }}
+//             />
+//           </Stack>
+//         </Toolbar>
+//         {/* <br/> */}
+//               <Divider style={{backgroundColor:"white"}}/>
+//               {/* <br/> */}
+//         <List disablePadding dense style={{ marginTop: "1vh" }}>
+//           <ListItem
+//             style={{
+//               display: "flex",
+//               justifyContent: "space-between",
+//               alignItems: "center",
+//             }}
+//             // className="sidebar-item"
+//             onClick={onClick}
+//             button
+//             dense
+//           >
+//             <div
+//               style={{
+//                 paddingLeft: depth * depthStep,
+//                 // whiteSpace:'nowrap',
+//                 // textOverflow:'ellipsis',
+//                 // overflow:'hidden',
+//                 // display:'flex',
+//                 // alignItems:'center',
+//                 // width:'100%'
+//               }}
+//               className="sidebar-item-content"
+//             >
+
+//               {<Home style={{ marginRight: "3px" }} />}
+//               {/* // <Icon className="sidebar-item-icon" fontSize="small" /> */}
+//               <div
+//                 className="sidebar-item-text"
+//                 style={{ fontSize: "16px", fontFamily: "unset" }}
+//                 onClick={routeChangeHome}
+//               >
+//                 Home
+//               </div>
+//             </div>
+//           </ListItem>
+//           {items.map((sidebarItem: any, index: any) => (
+//             <React.Fragment key={`${sidebarItem.name}${index}`}>
+//               {sidebarItem === "divider" ? (
+//                 <Divider style={{ margin: "6px 0", color: "white" }} />
+//               ) : (
+//                 <SidebarItem
+//                   depthStep={depthStep}
+//                   depth={depth}
+//                   expanded={expanded}
+//                   item={sidebarItem}
+//                 />
+//               )}
+//             </React.Fragment>
+//           ))}
+//         </List>
+//       </Drawer>
+//       <Drawer
+//         anchor="left"
+//         open={userdrawerOpen}
+//         onClose={() => {
+//            setUserdrawerOpen(false);
+//           // handleDrawerClose();
+//         }}
+//         // sx={{
+//         //   '& .MuiDrawer-paper': {
+//         //     background: 'linear-gradient(to bottom, #ff7e5f, #feb47b)',
+//         //   },
+//         // }}
+//       >
+//         <Box
+//           sx={{ width: drawerWidth,}}
+//           role="presentation"
+//         >
+//           <IconButton
+//             edge="end"
+//             onClick={()=> setUserdrawerOpen(false)}
+//             aria-label="close"
+//             sx={{ color:"white", position: 'absolute', right: 15, top: 2 }}
+//           >
+//             <CloseIcon />
+//           </IconButton>
+//        <p
+//             style={{
+//               paddingTop: "5vh",
+//               paddingBottom: "5vh",
+//               textAlign: "center",
+//               // textDecoration: "underline",
+//               backgroundImage:
+//                 "linear-gradient(45deg, #405de6, #5851db, #833ab4, #c13584, #e1306c, #fd1d1d)",
+//               color: "whitesmoke",
+//               borderBottomLeftRadius: "10px",
+//               borderBottomRightRadius: "10px",
+//               fontSize:"20px"
+//             }}
+//           >
+//            User Details
+//           </p>
+//           {userDetail.map((user: any, index: any) => (
+//             <div key={index}>
+//               <div
+//                 style={{
+//                   display: "flex",
+//                   alignItems: "center",
+//                   justifyContent: "center",
+//                   marginTop: "10px",
+//                   marginBottom: "10px",
+//                 }}
+//               >
+//                 <div
+//                   style={{
+//                     textAlign: "center",
+//                     borderRadius: "50%",
+//                     height: "90px",
+//                     width: "90px",
+//                     borderColor:
+//                       "linear-gradient(45deg, #405de6, #5851db, #833ab4, #c13584, #e1306c, #fd1d1d)",
+//                     backgroundColor: "red",
+//                     padding: "13px",
+//                     paddingTop: "30px",
+//                     paddingLeft: "13px",
+//                     color: "whitesmoke",
+//                     fontSize: "20px",
+//                   }}
+//                 >
+//                   {getImageForFirstName(
+//                     user.firsT_NAME,
+//                     user.middlE_NAME,
+//                     user.suR_NAME
+//                   )}
+//                 </div>
+//               </div>
+//               <div style={{ marginLeft: "15px" }}>
+//                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+//                   <img src={log} width={25} />{" "}
+//                   {user.logiN_NAME == "" ? "N/A" : `${user.logiN_NAME}`}
+//                 </div>
+//                 <br />
+//                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+//                   {" "}
+//                   <img src={roles} width={25} />{" "}
+//                   {user.rolename == "" ? "N/A" : `${user.rolename}`}
+//                 </div>
+//                 {/* <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+//                   <img src={id} width={25} />{" "}
+//                   {user.useR_ID == "" ? "N/A" : `${user.useR_ID}`}
+//                 </div>*/}
+//                 <br />
+//                 <div>First Name : {user.firsT_NAME}</div>
+//                 <div style={{ marginTop: "10px", marginBottom: "10px" }}>
+//                   Middle Name :{" "}
+//                   {user.middlE_NAME == "" ? "N/A" : `${user.middlE_NAME}`}
+//                 </div>
+//                 <div>Last Name : {user.suR_NAME}</div>
+//                 <br />
+//                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+//                   {" "}
+//                   <img src={dobs} width={22} />{" "}
+//                   {dayjs(user.dob).format("YYYY-MM-DD")}
+//                 </div>
+//                 <br />
+//                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+//                   {" "}
+//                   <img src={genders} width={22} />{" "}
+//                   {getGenderText(user.gendeR_ID)}
+//                 </div>
+//                 <br />
+//                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+//                   {" "}
+//                   <img src={call} width={22} />{" "}
+//                   {user.cuR_MOBILE == "" ? " N/A" : `${user.cuR_MOBILE}`}
+//                 </div>
+//                 <br />
+//                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+//                   {" "}
+//                   <img src={emails} width={22} />{" "}
+//                   {user.email == "" ? " N/A" : `${user.email}`}
+//                 </div>
+//                 <br />
+//                 {/* <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+//                   {" "}
+//                   <img src={roles} width={25} />{" "}
+//                   {user.rolename == "" ? "N/A" : `${user.rolename}`}
+//                 </div>
+//                 <br /> */}
+//                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+//                   Account Status :{" "}
+//                   {user.iS_ACTIVE === true ? (
+//                     <img src={tick} width={25} />
+//                   ) : (
+//                     <img src={crs} width={25} />
+//                   )}
+//                 </div>
+//               </div>
+//             </div>
+//           ))}
+//         </Box>
+
+//       </Drawer>
+//       {/* <TemporaryDrawer isopen={userdrawerOpen} /> */}
+//       {/* </div> */}
+//     </Box>
+//   );
+// };
+
+// export default Sidebar;

@@ -1,0 +1,122 @@
+/* Overlay background */
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.3); /* Slight overlay to focus on modal */
+    z-index: 9998; /* Behind the modal */
+    display: none;
+  }
+  
+  /* Modal (cookie consent) banner */
+  .cookie-banner {
+    position: fixed;
+    top: 50%;
+    right: -400px;  /* Initially hidden off the right side */
+    transform: translateY(-50%);  /* Center vertically */
+    width: 350px;
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.85), rgba(42, 51, 72, 0.85)); /* Smooth gradient */
+    color: #fff;
+    padding: 25px;
+    border-radius: 10px 0 0 10px;  /* Rounded corners */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    transition: right 0.3s ease-in-out;  /* Slide in effect */
+    z-index: 9999;  /* On top of overlay */
+  }
+  
+  /* Show the banner with slide-in effect */
+  .cookie-banner.show {
+    right: 0;
+  }
+  
+  /* Header with icon and close button */
+  .cookie-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 15px;
+  }
+  
+  .cookie-header img {
+    width: 35px;
+    height: 35px;
+    filter: invert(100%);
+  }
+  
+  .close-btn {
+    font-size: 24px;
+    font-weight: bold;
+    color: #fff;
+    cursor: pointer;
+    background: none;
+    border: none;
+    display: flex;
+    align-items: center;
+  }
+  
+  /* Cookie message */
+  .cookie-message {
+    font-size: 16px;
+    line-height: 1.6;
+    margin-bottom: 20px;
+  }
+  
+  /* Button container */
+  .cookie-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  /* Base button styling */
+  button {
+    padding: 12px 20px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 30px;
+    transition: all 0.3s ease;
+    border: none;
+  }
+  
+  /* Accept button styling */
+  .accept-btn {
+    background-color: #4CAF50;
+    color: white;
+    box-shadow: 0 4px 10px rgba(0, 200, 0, 0.2);
+  }
+  
+  .accept-btn:hover {
+    background-color: #45a049;
+    transform: scale(1.05); /* Slight enlarge on hover */
+  }
+  
+  /* Decline button styling */
+  .decline-btn {
+    background-color: #FF6F61;
+    color: white;
+    box-shadow: 0 4px 10px rgba(255, 105, 97, 0.2);
+  }
+  
+  .decline-btn:hover {
+    background-color: #f44336;
+    transform: scale(1.05); /* Slight enlarge on hover */
+  }
+  
+  /* Responsiveness for smaller screens */
+  @media (max-width: 768px) {
+    .cookie-banner {
+      width: 300px;
+    }
+  
+    .cookie-message {
+      font-size: 14px;
+    }
+  
+    .cookie-buttons {
+      flex-direction: column;
+    }
+  }
+  

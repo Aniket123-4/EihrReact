@@ -1,0 +1,86 @@
+/* ThemeStyle.css */
+
+/* Base styles (optional) */
+body {
+    margin: 0;
+    font-family: Roboto, Helvetica, Arial, sans-serif;
+    transition: background-color 0.3s ease;
+}
+
+/* --- Light Theme (Clean & Professional) --- */
+.light-theme {
+    --menu-background: #ffffff;
+    --menu-color: #333333; /* Darker grey for text */
+    --divider-background: #e0e0e0; /* Lighter grey divider */
+    --header-background: #007bff; /* Primary blue */
+    --header-background1: #4da3ff; /* Lighter shade for secondary bar/avatar */
+    --header-color: #ffffff;
+    --drawer-background: #f8f9fa; /* Very light grey */
+    --drawer-color: #343a40; /* Dark grey drawer text */
+    --drawer-color-rgb: 52, 58, 64; /* RGB for drawer color */
+    --grid-background: #ffffff;
+    --grid-headerBackground: #007bff;
+    --grid-headerColor: #ffffff;
+    --main-background: #e9ecef; /* Light background for content area */
+    --header-color-rgb: 255, 255, 255; /* Needed for breadcrumb separator */
+    /* --background-image: none; /* Optional background */
+}
+
+/* --- Dark Theme (Modern & Focused) --- */
+.dark-theme {
+    --menu-background: #424242; /* Dark grey */
+    --menu-color: #e0e0e0;    /* Light grey text */
+    --divider-background: #616161; /* Medium grey divider */
+    --header-background: #37474f; /* Dark blue-grey */
+    --header-background1: #455a64; /* Slightly lighter blue-grey */
+    --header-color: #eceff1;    /* Off-white text */
+    --drawer-background: #303030; /* Very dark grey */
+    --drawer-color: #cfd8dc;    /* Light blue-grey text */
+    --drawer-color-rgb: 207, 216, 220; /* RGB for drawer color */
+    --grid-background: #c0b9b9; /* Dark background for grids */
+    --grid-headerBackground: #37474f;
+    --grid-headerColor: #eceff1;
+    --main-background: #212121; /* Very dark background */
+    --header-color-rgb: 236, 239, 241; /* Needed for breadcrumb separator */
+    /* --background-image: none; */
+}
+
+/* --- Medical Blue Theme (Trustworthy & Calm) --- */
+.medical-blue-theme {
+    --menu-background: #e3f2fd; /* Very light blue */
+    --menu-color: #0d47a1;    /* Dark blue */
+    --submenu-color: #79a6e9;
+    --divider-background: #bbdefb; /* Light blue divider */
+    --header-background: #1976d2; /* Standard blue */
+    --header-background1: #42a5f5; /* Lighter blue */
+    --header-color: #ffffff;
+    --drawer-background: #e3f2fd; /* Very light blue */
+    --drawer-color: #0d47a1;    /* Dark blue text */
+    --drawer-color-rgb: 13, 71, 161; /* RGB for drawer color */
+    --grid-background: #b3cfe4;
+    --grid-headerBackground: #1976d2;
+    --grid-headerColor: #ffffff;
+    --main-background: #f0f4f8; /* Soft blue-grey background */
+    --header-color-rgb: 255, 255, 255;
+    /* --background-image: none; */
+}
+
+/* --- Calm Green Theme (Soothing & Natural) --- */
+.calm-green-theme {
+    --menu-background: #e8f5e9; /* Very light green */
+    --menu-color: #1b5e20;    /* Dark green */
+    --divider-background: #c8e6c9; /* Light green divider */
+    --header-background: #388e3c; /* Medium green */
+    --header-background1: #66bb6a; /* Lighter green */
+    --header-color: #ffffff;
+    --drawer-background: #e8f5e9; /* Very light green */
+    --drawer-color: #1b5e20;    /* Dark green text */
+    --drawer-color-rgb: 27, 94, 32; /* RGB for drawer color */
+    --grid-background: #e8f5e9;
+    --grid-headerBackground: #388e3c;
+    --grid-headerColor: #ffffff;
+    --main-background: #f1f8e9; /* Very soft green background */
+    --header-color-rgb: 255, 255, 255;
+    /* --background-image: none; */
+}
+

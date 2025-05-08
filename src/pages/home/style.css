@@ -1,0 +1,41 @@
+/* .click:hover {
+    transform: scale(0.6);
+    transition-duration: 0.5s;
+} */
+
+/* .click:hover {
+    border: "5px Solid orange",
+    } */
+
+
+
+
+/*  style   */
+
+.click {
+    /* box-shadow: 3px 5px 6px 8px; */
+    /* border-radius: 10px; */
+    border-left: 5px solid rgb(81, 245, 5);
+}
+
+.click:hover {
+    /* -ms-transform: scale(1.1); /* IE 9 */
+    /* -webkit-transform: scale(1.1); /* Safari 3-8 */
+    /* transform: scale(1.1);*/
+    border: 0.01px solid transparent;
+
+}
+
+.click1 {
+    /* box-shadow: 3px 5px 6px 8px; */
+    /* border-radius: 10px; */
+    border-left: 5px solid rgb(90, 77, 2);
+}
+
+.click1:hover {
+    /* -ms-transform: scale(1.1); /* IE 9 */
+    /* -webkit-transform: scale(1.1); /* Safari 3-8 */
+    /* transform: scale(1.1);*/
+    border: 2px solid rgb(4, 126, 14);
+
+}
