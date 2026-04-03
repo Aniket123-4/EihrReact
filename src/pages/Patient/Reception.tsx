@@ -61,6 +61,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import CloseIcon from '@mui/icons-material/Close';
 import { Phone as PhoneIconLucide, Tag as TagIconLucide } from "lucide-react";
+import { toast, ToastContainer } from "react-toastify";
 
 interface SelectOption {
     label: string;
@@ -472,34 +473,42 @@ export default function Reception() {
         }
     }, []);
 
-    const handleCheckinSubmit = useCallback(async () => {
-        setIsCheckinSubmitting(true);
-        try {
-            const payload = {
-                ...checkinFormData,
-                consultantDocID: checkinFormData.consultantDocID.toString(),
-                referToDocID: checkinFormData.consultantDocID.toString(), // Assuming referTo is same as consultant
-                // Ensure all numeric fields that API expects as numbers are converted if needed
-                // e.g., sectionID: Number(checkinFormData.sectionID) || 0,
-                userID: -1, // Default as per original
-                formID: -1, // Default as per original
-                serviceID: -1, // Default as per original
-                isNextVisit: false, // Default as per original
-                patientFoundID: 1, // Default as per original
-                lstType_ro: [], // Default as per original
-                admTypeID: 1, // Default as per original
-                caseType: 1 // Default as per original
-            };
-            await api.post('/AddUpdatePatientCase', payload);
+ const handleCheckinSubmit = useCallback(async () => {
+    setIsCheckinSubmitting(true);
+    try {
+        const payload = {
+            ...checkinFormData,
+            consultantDocID: checkinFormData.consultantDocID.toString(),
+            referToDocID: checkinFormData.consultantDocID.toString(),
+            userID: -1,
+            formID: -1,
+            serviceID: -1,
+            isNextVisit: false,
+            patientFoundID: 1,
+            lstType_ro: [],
+            admTypeID: 1,
+            caseType: 1
+        };
+
+        const response = await api.post('/AddUpdatePatientCase', payload);
+        const data = response?.data;
+
+        // ✅ SUCCESS CASE
+        if (data?.isSuccess) {
+            toast.success("Check-in successful");
             closeCheckinModal();
-            // Consider success notification and refreshing main patient list if relevant
-        } catch (error) {
-            console.error('Check-in failed:', error);
-            // Consider error notification
-        } finally {
-            setIsCheckinSubmitting(false);
+        } 
+        // ❌ ERROR CASE (YOUR ISSUE)
+        else {
+            toast.error(data?.msg || "Check-in failed");
         }
-    }, [checkinFormData, closeCheckinModal]);
+
+    } catch (error) {
+        toast.error("Something went wrong");
+    } finally {
+        setIsCheckinSubmitting(false);
+    }
+}, [checkinFormData, closeCheckinModal]);
 
 
     const handleCheckin = useCallback(async (patient: PatientData) => {
@@ -718,7 +727,7 @@ export default function Reception() {
                 onSubmit={handleCheckinSubmit}
                 isSubmitting={isCheckinSubmitting}
             />
-
+<ToastContainer/>
             <Paper elevation={3} sx={{ width: "100%", overflow: "hidden", p: { xs: 1.5, md: 3 } }}>
                 <Grid container spacing={3} sx={{ mb: 4, px: { xs: 1, md: 2 } }}>
                     {statusCardsData.map((status) => {

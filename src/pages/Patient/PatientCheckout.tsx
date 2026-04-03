@@ -39,7 +39,7 @@ import {
 import DataGrids from "../../utils/Datagrids"; // Make sure path is correct
 import { toast } from "react-toastify";
 import { getISTDate } from "../../utils/Constant"; // Make sure path is correct
-import { PatientFile } from "./PatientFile"; // Keep if needed elsewhere
+import { PatientFile } from "./PatientFileTab"; // Keep if needed elsewhere
 
 // Import Modal Icons
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';

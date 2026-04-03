@@ -55,12 +55,28 @@ import InvestigationParameter from "../pages/Master/InvestigationParameter/Inves
 import InfraStructure from "../pages/Master/InfraStructure/InfraStructure";
 import InvestigationServices from "../pages/Master/InvestigationServices/InvestigationServices";
 import ComplaintMaster from "../pages/master/ComplaintMaster/ComplaintMaster";
+import Index from "../pages";
+import GenderMaster from "../pages/master/Gender/GenderMaster";
+import MaritalStatus from "../pages/master/MaritalStatus/MaritalStatus";
+import BloodGroupMaster from "../pages/master/BloodGroupMaster/BloodGroupMaster";
+import ReligionMaster from "../pages/master/ReligionMaster/ReligionMaster";
+import RelationMaster from "../pages/master/RelationMaster/RelationMaster";
+import CountryMaster from "../pages/master/CountryMaster/CountryMaster";
+import StateMaster from "../pages/master/StateMaster/StateMaster";
+import DistrictMaster from "../pages/master/DistrictMaster/DistrictMaster";
 
 const appRoutes: RouteType[] = [
   {
     index: true,
-    element: <Login_Page />,
+    element: <Index />,
     state: "home",
+  },
+
+  {
+    element: <Login_Page />,
+    state: "Login",
+    path: "/login",
+    
   },
   {
     element: <HomePage />,
@@ -294,12 +310,87 @@ const appRoutes: RouteType[] = [
           displayText: "Complaint Master",
         },
       },
+
+      {
+        path: "/master/GenderMaster",
+        element: <GenderMaster />,
+        state: "master.genderMaster",
+        sidebarProps: {
+          displayText: "Gender Master",
+        },
+      },
+
+      {
+        path: "/master/maritalstatusmaster",
+        element: <MaritalStatus/>,
+        state: "master.maritalStatusMaster",
+        sidebarProps: {
+          displayText: "Marital Status Master",
+        },
+      },
+
+      {
+        path: "/master/bloodgroupmaster",
+        element: <BloodGroupMaster />,
+        state: "master.bloodGroupMaster",
+        sidebarProps: {
+          displayText: "Blood Group Master",
+        },
+      },
       {
         path: "/master/investigationparameter",
         element: <InvestigationParameter />,
         state: "master.investigationparameter",
         sidebarProps: {
           displayText: "investigation parameter",
+        },
+      },
+
+      {
+        path: "/master/religionmaster",
+        element: <ReligionMaster />,
+        state: "master.religionMaster",
+        sidebarProps: {
+          displayText: "Religion Master",
+        },
+      },
+
+
+      
+      {
+        path: "/master/RelationMaster",
+        element: <RelationMaster />,
+        state: "master.relationMaster",
+        sidebarProps: {
+          displayText: "Relation Master",
+        },
+      },
+
+      {
+        path: "/master/countrymaster",
+        element: <CountryMaster />,
+        state: "master.countryMaster",
+        sidebarProps: {
+          displayText: "Country Master",
+        },
+      },
+
+
+       {
+        path: "/master/statemaster",
+        element: <StateMaster/>,
+        state: "master.stateMaster",
+        sidebarProps: {
+          displayText: "State Master",
+        },
+      },
+
+       {
+        path: "/master/districtmaster",
+        element: <DistrictMaster />,
+        state: "master.districtMaster",
+        sidebarProps: {
+          displayText: "District Master",
         },
       },
       {
@@ -436,4 +527,3 @@ const appRoutes: RouteType[] = [
 
 
 export default appRoutes;
-

@@ -12,20 +12,23 @@ import i18n from './i18n';
 import './index.css';
 import React from 'react';
 
+// 1. Import the ThemeProvider (check the path to your ThemeContext file)
+import { ThemeProvider } from './contexts/ThemeContext'; 
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
 
 root.render(
-  // <React.StrictMode>
-    <Provider store={store}>
-      <I18nextProvider i18n={i18n}>
-      <CssBaseline />
-      <App />
-      </I18nextProvider>
-    </Provider>
-  // </React.StrictMode>
+  <Provider store={store}>
+    <I18nextProvider i18n={i18n}>
+      {/* 2. Wrap everything inside ThemeProvider */}
+      <ThemeProvider>
+        <CssBaseline />
+        <App />
+      </ThemeProvider>
+    </I18nextProvider>
+  </Provider>
 );
 
 reportWebVitals();

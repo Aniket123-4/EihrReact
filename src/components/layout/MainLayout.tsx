@@ -89,41 +89,36 @@ const MainLayout: React.FC = () => {
     // Effect 1: Load user permissions from localStorage on component mount
     useEffect(() => {
         const storedPermissions = localStorage.getItem("userPermissions");
-        const userSession = localStorage.getItem("user"); // Also check if user is logged in
+        const userSession = localStorage.getItem("user");
+
+        // Public Routes jahan bina login ke jaa sakte hain
+        const publicRoutes = ["/", "/login"]; 
 
         if (!userSession) {
-             console.log("MainLayout: No user session found. Redirecting to login.");
-             navigate("/");
-             return; // Stop further execution in this effect
+            // Agar user public route par nahi hai aur login nahi hai, toh login par bhej do
+             if (!publicRoutes.includes(location.pathname)) {
+                 console.log("MainLayout: No user session found. Redirecting to login.");
+                 navigate("/"); // '/' ki jagah '/login' karein (ya jo bhi aapka login route ho)
+             }
+             return; 
         }
 
         if (storedPermissions) {
             try {
-                const parsedPermissions: UserPermission = JSON.parse(storedPermissions);
-                
+                const parsedPermissions = JSON.parse(storedPermissions);
                 if (parsedPermissions && parsedPermissions.moduleRight && parsedPermissions.formRight) {
-                     console.log("MainLayout: Permissions loaded from localStorage.");
                     setUserPermission(parsedPermissions);
                 } else {
-                    console.error("MainLayout: Parsed permissions lack expected structure (moduleRight or formRight).");
-                 
                     localStorage.removeItem("userPermissions");
-                    
                 }
             } catch (error) {
-                console.error("MainLayout: Failed to parse permissions from localStorage:", error);
-               
                 localStorage.removeItem("userPermissions");
-                
             }
         } else {
-             
-             console.warn("MainLayout: User session exists, but no permissions found in localStorage. Waiting for potential update or check login flow.");
-            
              setUserPermission(null);
-             setMenuItems([]); // Clear existing menu items
+             setMenuItems([]); 
         }
-    }, [navigate]); 
+    }, [navigate, location.pathname]); 
 
     
     useEffect(() => {
@@ -191,13 +186,17 @@ const MainLayout: React.FC = () => {
     }
 
 
+     const isPublicRoute = location.pathname === "/" || location.pathname === "/login";
+
+
+
    
 
 
     return (
         <div>
             
-            {location.pathname === "/" ? (
+            {isPublicRoute ? (
                 <Outlet />
             ) : (
                 <div>
