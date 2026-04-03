@@ -1,3 +1,375 @@
+// import * as React from "react";
+// import Paper from "@mui/material/Paper";
+
+// import { useEffect, useState } from "react";
+// import PersonSearchIcon from '@mui/icons-material/PersonSearch';
+// import {
+//   Box,
+//   Button,
+//   Divider,
+//   Stack,
+//   // TextField, // Removed if using GridToolbar quick filter primarily
+//   Typography,
+//   IconButton, // Added
+//   Tooltip, // Added
+//   CircularProgress, // Keep CircularProgress
+//   Card, // Keep Card
+//   Grid,
+//   Avatar, // Keep Grid
+// } from "@mui/material";
+// import AddCircleIcon from "@mui/icons-material/AddCircle";
+// // import SearchIcon from "@mui/icons-material/Search"; // Removed if using GridToolbar
+// import EditIcon from "@mui/icons-material/Edit";
+// import DeleteIcon from "@mui/icons-material/Delete";
+// // import PrintIcon from "@mui/icons-material/Print"; // Keep if print functionality is separate
+// import { useNavigate, useLocation } from "react-router-dom";
+// import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog"; // Still using PrimeReact Dialog
+// import axios from "axios"; // Assuming api wraps axios or is similar
+// import api from "../../utils/Url"; // Ensure path is correct
+// import { useTranslation } from "react-i18next";
+// import {
+//   DataGrid,
+//   GridColDef,
+//   GridToolbar, // Import GridToolbar
+//   GridRenderCellParams, // Import type for renderCell params
+// } from "@mui/x-data-grid";
+// // import DataGrids from "../../utils/Datagrids"; // Removed if using DataGrid directly now
+// import { toast } from "react-toastify";
+// import { getISTDate } from "../../utils/Constant"; // Ensure path is correct
+// import { PatientFile } from "./PatientFile"; // Ensure path is correct
+
+// // Removed unused createData function
+
+// // Define a type for patient data for better type safety
+// interface PatientData {
+//   serialNo: number;
+//   id: number; // Assuming patientID is the unique identifier
+//   patientID: number;
+//   patientNo: string;
+//   candName: string;
+//   dob: string;
+//   age: number;
+//   genderName: string;
+//   bloodGroup: string;
+//   curMobileNo: string;
+//   email: string;
+//   // Add other fields returned by the API if needed
+//   [key: string]: any; // Allow other properties if API response varies
+// }
+
+
+// export default function PatientRegistration() {
+//   // Removed page and rowsPerPage state if DataGrid handles it internally
+//   // const [page, setPage] = useState(0);
+//   // const [rowsPerPage, setRowsPerPage] = useState(10); // Default page size for DataGrid
+//   const [patients, setPatients] = useState<PatientData[]>([]); // Use typed state
+//   const [isLoading, setIsLoading] = useState(true);
+//   // const [menupermisiondata, setMenupermisiondata] = useState<any>(); // Keep if permission logic is needed
+//   const [showPatientFile, setShowPatientFile] = useState(false);
+//   const [selectedPatientData, setSelectedPatientData] = useState<PatientData | null>(null);
+
+//   const { t } = useTranslation();
+//   const location = useLocation();
+//   const navigate = useNavigate();
+//   const { defaultValuestime } = getISTDate();
+
+
+//   // --- Data Fetching ---
+//   const getList = async () => {
+//     setIsLoading(true);
+//     try {
+//       const collectData = {
+//         patientNo: "",
+//         patientUIDNo: "",
+//         ageGreater: 0,
+//         genderID: -1,
+//         civilStatusID: -1,
+//         bloodGroupID: -1,
+//         nationalityID: -1,
+//         serviceTypeID: -1,
+//         patientName: "",
+//         patientMobileNo: "",
+//         patientPhoneNo: "",
+//         patientDOB: "1900-01-01",
+//         fromDate: "1900-01-21",
+//         toDate: defaultValuestime,
+//         isDeleted: false,
+//         userID: -1,
+//         formID: -1,
+//         type: 1,
+//         patientID: -1,
+//       };
+//       const response = await api.post<{ isSuccess: boolean; result: any[], mesg: string }>(
+//         `GetPatientSearch`,
+//         collectData
+//       );
+
+//       if (response.data.isSuccess) {
+//         const data = response.data.result;
+//         const patientsWithSerial: PatientData[] = data.map((patient: any, index: any) => ({
+//           ...patient,
+//           serialNo: index + 1,
+//           id: patient.patientID, // Ensure 'id' is set for DataGrid
+//         }));
+//         setPatients(patientsWithSerial);
+//       } else {
+//         toast.error(response.data.mesg || t("text.FailedToFetchData"));
+//         setPatients([]); // Clear data on error
+//       }
+//     } catch (error) {
+//       console.error("Error fetching patient data:", error);
+//       toast.error(t("text.NetworkOrServerError"));
+//       setPatients([]); // Clear data on error
+//     } finally {
+//       setIsLoading(false);
+//     }
+//   };
+
+  // useEffect(() => {
+  //   getList();
+  //   // Permission logic (keep if needed)
+  //   // var data = JSON.parse(localStorage.getItem("userdata")!);
+  //   // ... (rest of permission logic) ...
+  // }, []); // Removed defaultValuestime from dependency array unless it changes and should trigger refetch
+
+//   // --- Deletion Logic ---
+  // let delete_id: number | null = null; // Use appropriate type
+
+  // const acceptDelete = () => {
+  //   if (delete_id === null) return;
+  //   const collectData = {
+  //     PatientID: delete_id, // Assuming API expects PatientID
+  //     // Add other required fields for deletion if necessary
+  //     // UserID: ...
+  //   };
+  //   // *** IMPORTANT: Verify the correct API endpoint and payload for deletion ***
+  //   // Example: api.delete or api.post for soft delete
+  //   api
+  //     .post(`Patient/DeletePatient`, collectData) // Replace with your actual delete endpoint and method
+  //     .then((response) => {
+  //       if (response.data.isSuccess) {
+  //         toast.success(response.data.mesg || t("text.SuccessfullyDeleted"));
+  //         getList(); // Refresh list after delete
+  //       } else {
+  //         toast.error(response.data.mesg || t("text.FailedToDelete"));
+  //       }
+  //     })
+  //     .catch(err => {
+  //       toast.error(t("text.FailedToDelete"));
+  //       console.error("Deletion error:", err);
+  //     });
+  // };
+
+  // const rejectDelete = () => {
+  //   toast.info(t("text.DeletionCancelled"), { autoClose: 3000 });
+  // };
+
+  // const handleDeleteClick = (id: number) => {
+  //   delete_id = id;
+  //   confirmDialog({
+  //     message: t("text.AreYouSureToDelete"), // Use translation
+  //     header: t("text.DeleteConfirmation"), // Use translation
+  //     icon: "pi pi-info-circle",
+  //     acceptClassName: "p-button-danger",
+  //     accept: acceptDelete,
+  //     reject: rejectDelete,
+  //   });
+  // };
+
+
+//   // --- Navigation ---
+
+
+
+  // const routeChangeEdit = (row: any) => {
+  //   // console.log(row);
+  //   let path = `/Patient/PatientRegistrationEdit`;
+  //   navigate(path, {
+  //     state: row,
+  //   });
+  // };
+
+  // const routeChangeAdd = () => {
+  //   navigate(`/Patient/PatientRegistrationAdd`); // Ensure route is correct
+  // };
+
+//   // --- Patient File Modal ---
+  // const handlePatientNoClick = (patientData: PatientData) => {
+  //   setSelectedPatientData(patientData);
+  //   setShowPatientFile(true);
+  // };
+
+//   // --- DataGrid Columns Definition ---
+  // const columns: GridColDef<PatientData>[] = [
+  //   {
+  //     field: "actions",
+  //     headerName: t("text.Action"),
+  //     width: 70, // Adjust width as needed
+  //     sortable: false,
+  //     disableColumnMenu: true,
+  //     renderCell: (params: GridRenderCellParams<any, PatientData>) => ( // Use specific type
+  //       <Stack direction="row" spacing={0.5} alignItems="center">
+  //         <Tooltip title={t("text.edit") || "Edit"}>
+  //           {/* Apply permission check if needed */}
+  //           {/* <IconButton size="small" color="primary" onClick={() => routeChangeEdit(params.row)} disabled={!menupermisiondata?.isEdit}> */}
+  //           <IconButton size="small" color="primary" onClick={() => routeChangeEdit(params.row)}>
+  //             <EditIcon fontSize="inherit" />
+  //           </IconButton>
+  //         </Tooltip>
+
+  //       </Stack>
+  //     ),
+  //   },
+
+  //   {
+  //     field: "patientNo",
+  //     headerName: "Patient No.",
+  //     width: 100,
+  //     renderCell: (params: any) => (
+  //       <Typography
+  //         component="span"
+  //         onClick={() => handlePatientNoClick(params.row)}
+  //         sx={{
+  //           cursor: 'pointer',
+  //           color: 'primary.main',
+  //           textDecoration: 'underline',
+  //           '&:hover': {
+  //             color: 'primary.dark',
+  //           },
+  //         }}
+  //       >
+  //         {params.value}
+  //       </Typography>
+  //     ),
+  //   },
+  //   { field: "candName", headerName: "Candidate Name", width: 200, flex: 2 },
+  //   { field: "dob", headerName: t("text.DOB"), width: 120 },
+  //   { field: "age", headerName: t("text.Age"), width: 90 },
+  //   { field: "genderName", headerName: t("text.GenderName") || "Gender", width: 110 },
+  //   { field: "bloodGroup", headerName: "Blood Group", width: 120 },
+  //   { field: "curMobileNo", headerName: t("text.MobileNumber") || "Mobile Number", width: 150 },
+  //   { field: "email", headerName: t("text.Email"), width: 200, flex: 1 },
+  //   // Add other columns as needed
+  // ];
+
+//   return (
+//     // Removed outer Grid container, Card handles structure
+//     <Card sx={{ m: 2, boxShadow: 3, borderRadius: 2 }}> {/* Added margin, shadow, border radius */}
+//       <Paper sx={{ p: 2, backgroundColor: "#F8F9FA" }}> {/* Added padding and light background */}
+//         <ConfirmDialog /> {/* Keep PrimeReact Dialog */}
+
+//         <Grid item xs={10}>
+//           <Box display="flex" alignItems="center" gap={1}>
+//             <Avatar sx={{ bgcolor: "primary.main", width: 36, height: 36 }}>
+//               <PersonSearchIcon />
+//             </Avatar>
+//             <Typography variant="h5" gutterBottom
+//               fontWeight={700} color="text.primary"
+//               component="div"
+//               sx={{ padding: "20px" }}
+//               align="left">{t("text.PatientSearch")}</Typography>
+//           </Box>
+//         </Grid>
+
+
+//         <Divider sx={{ mb: 2 }} />
+
+//         <Stack
+//           direction={{ xs: "column", sm: "row" }} // Responsive direction
+//           spacing={2}
+//           justifyContent="flex-end" // Align button to the right
+//           sx={{ mb: 2 }}
+//         >
+
+//           <Button
+//             onClick={routeChangeAdd}
+//             variant="contained"
+//             startIcon={<AddCircleIcon />}
+//             color="primary"
+//             sx={{ textTransform: 'none', backgroundColor: `var(--grid-headerBackground)` }}
+//           >
+//             Add Patient
+//           </Button>
+//           {/* ) : null} */}
+
+
+//         </Stack>
+
+        {/* Data Grid */}
+        // <Box sx={{ height: 'calc(100vh - 250px)', width: '100%', backgroundColor: `var(--grid-background)` }}>
+        //   <DataGrid
+        //     rows={patients}
+        //     columns={columns}
+        //     loading={isLoading}
+        //     pageSizeOptions={[10, 25, 50, 100]}
+        //     initialState={{
+        //       pagination: {
+        //         paginationModel: { pageSize: 10, page: 0 },
+        //       },
+        //     }}
+        //     slots={{
+        //       toolbar: GridToolbar,
+        //       loadingOverlay: () => (
+        //         <Box sx={{
+        //           position: 'absolute', top: 0, width: '100%', height: '100%',
+        //           display: 'flex', alignItems: 'center', justifyContent: 'center',
+        //           background: 'rgba(255, 255, 255, 0.7)'
+        //         }}>
+        //           <CircularProgress />
+        //         </Box>
+        //       ),
+        //       noRowsOverlay: () => (
+        //         <Box sx={{
+        //           p: 3, display: 'flex', alignItems: 'center',
+        //           justifyContent: 'center', height: '100%'
+        //         }}>
+        //           <Typography>No Patient Data Found</Typography>
+        //         </Box>
+        //       )
+        //     }}
+        //     slotProps={{
+        //       toolbar: {
+        //         showQuickFilter: true,
+        //         quickFilterProps: { debounceMs: 500 },
+        //         printOptions: { disableToolbarButton: true },
+        //         csvOptions: { disableToolbarButton: false },
+        //       },
+        //     }}
+        //     disableRowSelectionOnClick
+        //     sx={{
+        //       border: 1,
+        //       borderColor: 'divider',
+        //       '& .MuiDataGrid-columnHeaders': {
+        //         backgroundColor: `var(--grid-headerBackground)`,
+        //         color: `var(--grid-headerColor)`,
+        //       },
+        //       '& .MuiDataGrid-toolbarContainer': {
+        //         padding: 1,
+        //         borderBottom: 1,
+        //         borderColor: 'divider',
+        //       }
+        //     }}
+        //   />
+
+        // </Box>
+
+
+//         {selectedPatientData && (
+//           <PatientFile
+//             open={showPatientFile}
+//             onClose={() => {
+//               setShowPatientFile(false);
+//               setSelectedPatientData(null); // Clear selected data on close
+//             }}
+//             // Pass necessary patient identifier(s)
+//             PateintNo={selectedPatientData.patientNo}
+
+//           />
+//         )}
+//       </Paper>
+//     </Card>
+//   );
+// }
 
 
 import * as React from "react";
@@ -37,7 +409,7 @@ import {
 } from "@mui/x-data-grid";
 import { toast } from "react-toastify";
 import { getISTDate } from "../../utils/Constant";
-import { PatientFile } from "./PatientFile";
+import UnifiedPatientDrawer from "./PatientFile";
 //import { saveAs } from 'file-saver';
 import * as XLSX from 'xlsx';
 import { jsPDF } from "jspdf";
@@ -437,7 +809,7 @@ interface Props {
 
         {/* Enhanced Patient File Modal */}
         {selectedPatientData && (
-          <PatientFile
+          <UnifiedPatientDrawer
             open={showPatientFile}
             onClose={() => {
               setShowPatientFile(false);

@@ -22,7 +22,6 @@ import {
 
 } from '@mui/material';
 import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 import { LocalHospital, Schedule } from '@mui/icons-material';
 import dayjs from 'dayjs';
 import api from '../../utils/Url';
@@ -212,18 +211,7 @@ useEffect(() => {
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={true}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="colored" // ✨ this adds color theme
-      />
+     
       <DialogTitle sx={{ bgcolor: theme.palette.primary.main, color: 'white' }}>
         <Schedule sx={{ mr: 1 }} />
         Booking Timing - {slot?.start} to {slot?.end}
@@ -692,6 +680,7 @@ const Appointment = () => {
         }
       }
     }}>
+ 
       <Typography variant="h4" fontWeight="bold" mb={3} color="primary">
         <LocalHospital sx={{ mr: 1 }} />
         Appointment Booking

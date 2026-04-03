@@ -5,18 +5,29 @@ html {
 body {
     font-family: var(--font-family);
     font-weight: normal;
-    background: var(--surface-ground);
     color: var(--text-color);
-    /* padding: 1rem; */
+    
+    /* BACKGROUND KO TRANSPARENT KAREIN TAALKI CANVAS DIKHE */
+    background: transparent; 
+    
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    /* margin: 0px;
-    padding: 0px; */
+    
+    /* DEFAULT MARGIN/PADDING REMOVE KAREIN (Pehle commented tha) */
+    margin: 0px;
+    padding: 0px;
+    overflow-x: hidden; /* Horizontal scroll roknne ke liye */
 }
 
+/* PrimeReact card styling (Same as yours) */
 .card {
     background: var(--surface-card);
     padding: 2rem;
     border-radius: 10px;
     margin-bottom: 1rem;
+}
+
+/* Landing page ke sabhi sections ka background transparent rahe */
+section {
+    background-color: transparent !important;
 }

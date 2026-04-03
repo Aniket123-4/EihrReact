@@ -70,6 +70,7 @@ import { useTranslation } from "react-i18next";
 
 // Import the theme CSS
 import "./ThemeStyle.css"; // Make sure this file exists and potentially contains base font variable usage
+import GlobalSearch from "./GlobalSearch";
 
 const drawerWidth = 240;
 
@@ -510,6 +511,8 @@ export default function MiniDrawer({ items = [] }: { items: any[] }) {
                     <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1, fontWeight: 'bold', display: { xs: 'none', sm: 'block' } }}>
                         Hospital Portal {/* <--- CHANGE TITLE HERE */}
                     </Typography>
+
+                     <GlobalSearch />
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <Typography sx={{ display: { xs: 'none', md: 'block' }, mr: 1.5, fontSize: '0.9rem' }}>
                             {userDetails.userName}
