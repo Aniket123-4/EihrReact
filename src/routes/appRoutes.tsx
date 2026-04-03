@@ -64,6 +64,10 @@ import RelationMaster from "../pages/master/RelationMaster/RelationMaster";
 import CountryMaster from "../pages/master/CountryMaster/CountryMaster";
 import StateMaster from "../pages/master/StateMaster/StateMaster";
 import DistrictMaster from "../pages/master/DistrictMaster/DistrictMaster";
+import PatientDetails from "../pages/Patient/PateintDetails/PateintDetails";
+import NewTokenNo from "../pages/Patient/NewTokenNo";
+import UnitMaster from "../pages/MedicalStore/UnitMaster";
+import ItemCategoryMaster from "../pages/MedicalStore/ItemCategoryMaster";
 
 const appRoutes: RouteType[] = [
   {
@@ -107,6 +111,18 @@ const appRoutes: RouteType[] = [
         path: "/Patient/PatientRegistration",
         element: <PatientRegistration />,
         state: "Patient.PatientRegistration",
+      },
+
+      {
+        path: "/Patient/pateintDetails",
+        element: <PatientDetails />,
+        state: "Patient.pateintDetails",
+      },
+
+       {
+        path: "/Patient/newtokenno",
+        element: <NewTokenNo />,
+        state: "Patient.newTokenNo",
       },
       {
         path: "/Patient/PatientRegistrationEdit",
@@ -228,11 +244,22 @@ const appRoutes: RouteType[] = [
         element: <ItemMaster/>,
         state: "MedicalStore.itemMaster",
       },
+      {
+        path: "/medicalStore/itemcategorymaster",
+        element: <ItemCategoryMaster />,
+        state: "MedicalStore.itemcategorymaster",
+      },
 
       {
         path: "/medicalStore/directitemlot",
         element: <DirectItemReciept/>,
-        state: "medicalStore.directItemReciept",
+        state: "MedicalStore.directItemReciept",
+      },
+
+      {
+        path: "/medicalStore/unitmaster",
+        element: <UnitMaster />,
+        state: "medicalStore.unitMaster",
       },
       {
         path: "/medicalStore/itemStatus",

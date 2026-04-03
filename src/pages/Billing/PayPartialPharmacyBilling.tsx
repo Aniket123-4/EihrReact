@@ -11,6 +11,24 @@ import api from '../../utils/Url';
 import { getISTDate } from '../../utils/Constant';
 import { toast, ToastContainer } from 'react-toastify';
 
+// --- RAZORPAY GLOBAL TYPE ---
+declare global {
+   interface Window {
+      Razorpay: any;
+   }
+}
+
+// --- UTILITY TO LOAD RAZORPAY SCRIPT ---
+const loadRazorpayScript = () => {
+   return new Promise((resolve) => {
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+   });
+};
+
 const patients = [
    { id: 1, name: 'John Doe' },
    { id: 2, name: 'Jane Smith' }
@@ -24,11 +42,9 @@ const PayPartialPharmacyBilling: React.FC = () => {
       toDate: defaultValues
    })
 
-
    useEffect(() => {
       getPaymentRecord(filterDate);
    }, []);
-
 
    const getPaymentRecord = async (filterDate) => {
       try {
@@ -60,32 +76,105 @@ const PayPartialPharmacyBilling: React.FC = () => {
       formik.setFieldValue("paidAmt", row.balanceAmt)
    }
 
+   // --- ACTUAL DATABASE SAVING UPON SUCCESSFUL PAYMENT ---
+   const savePaymentToDatabase = async (values: any, paymentId: string) => {
+      try {
+         // Appending Razorpay details into your payload
+         const payload = {
+            ...values,
+            payTypeDetail: "Razorpay", // Tagging payment mode
+            payTypeNo: paymentId       // Tagging payment ID from Razorpay
+         };
+
+         const response = await api.post("AddPatientBalanceBill", payload);
+         if (response.data.isSuccess) {
+            toast.success("Partial Bill Paid Successfully!");
+            formik.resetForm();
+            getPaymentRecord(filterDate);
+         } else {
+            toast.error(response.data.msg);
+         }
+      } catch (error) {
+         console.log(error);
+         toast.error("Payment successful but failed to save in database.");
+      }
+   };
+
+   // --- RAZORPAY INTEGRATION LOGIC ---
+   const handleRazorpayPayment = async (values: any) => {
+      const res = await loadRazorpayScript();
+
+      if (!res) {
+         toast.error("Razorpay SDK failed to load. Are you online?");
+         return;
+      }
+
+      const payAmount = parseFloat(values.paidAmt || "0");
+      if (payAmount <= 0) {
+         toast.warning("Payment amount must be greater than zero.");
+         return;
+      }
+
+      // Find selected patient details for Razorpay prefill
+      const selectedPatient = tableData.find((p: any) => p.value === values.oldPatientBillID);
+
+      const options = {
+         key: "rzp_test_SYZuRxwlKGWymN", // ✅ Aapka Razorpay Test Key
+         amount: Math.round(payAmount * 100), // Razorpay accepts value in paise (multiplying by 100)
+         currency: "INR",
+         name: "Pharmacy Store",
+         description: `Partial Pharmacy Bill Payment`,
+         handler: function (response: any) {
+            // SUCCESS PAR YE FUNCTION CHALEGA
+            const paymentId = response.razorpay_payment_id;
+            
+            // Payment successful hone ke baad DB me data save karein
+            savePaymentToDatabase(values, paymentId);
+         },
+         prefill: {
+            name: selectedPatient?.patientName || "",
+            email: selectedPatient?.email || "",
+            contact: selectedPatient?.mobileNo || ""
+         },
+         theme: {
+            color: "#1976d2"
+         }
+      };
+
+      const paymentObject = new window.Razorpay(options);
+      
+      // Handle Payment Failure
+      paymentObject.on('payment.failed', function (response: any) {
+         toast.error(`Payment Failed: ${response.error.description}`);
+      });
+
+      paymentObject.open();
+   };
 
    const formik = useFormik({
       initialValues: {
          "oldPatientBillID": "",
          "paidAmt": "",
+         "payTypeNo": "",      // Added for Razorpay ID
+         "payTypeDetail": "",  // Added for Razorpay Mode
          "userID": -1,
          "formID": -1,
          "type": 1
       },
       onSubmit: async (values) => {
-         try {
-            const response = await api.post("AddPatientBalanceBill", values);
-            if (response.data.isSuccess) {
-               toast.success(response.data.msg);
-               formik.resetForm();
-               getPaymentRecord(filterDate);
-            } else {
-               toast.error(response.data.msg);
-            }
-
-         } catch (error) {
-            console.log(error);
+         if (!values.oldPatientBillID) {
+            toast.warning("Please select a patient bill.");
+            return;
          }
+         if (!values.paidAmt || parseFloat(values.paidAmt) <= 0) {
+            toast.warning("Please enter a valid amount.");
+            return;
+         }
+         
+         // Direct DB me bhejne ke bajaye pehle Razorpay open karega
+         handleRazorpayPayment(values);
       }
    })
-
 
    return (
       <Box>
@@ -101,10 +190,13 @@ const PayPartialPharmacyBilling: React.FC = () => {
                      disablePortal
                      fullWidth
                      options={tableData}
-                     value={tableData[tableData.findIndex((e: any) => e.value == formik.values.oldPatientBillID)]?.label || ""}
+                     value={tableData.find((e: any) => e.value === formik.values.oldPatientBillID) || null}
                      onChange={(e, newValue: any) => {
-                        if (!newValue) return;
-                        formik.setFieldValue("oldPatientBillID", newValue)
+                        if (!newValue) {
+                           formik.setFieldValue("oldPatientBillID", "");
+                           return;
+                        }
+                        formik.setFieldValue("oldPatientBillID", newValue.value);
                      }}
                      renderInput={(params) => (
                         <TextField {...params} label="Select Patient" size="small" />
@@ -194,7 +286,6 @@ const PayPartialPharmacyBilling: React.FC = () => {
                   </Button>
                </Grid>
             </Grid>
-
          </Paper>
 
          {/* Data Table */}

@@ -1,38 +1,29 @@
 import * as React from "react";
-import Paper from "@mui/material/Paper";
 import { useState, useEffect } from "react";
 import {
-    Autocomplete,
-    Box,
-    // Button, // No longer needed
-    Divider,
-    TextField,
-    Typography,
-    Grid,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Card,
-    CircularProgress,
+    Box, Grid, Typography, Paper, TextField, Button, Table, TableBody, 
+    TableCell, TableContainer, TableHead, TableRow, Card, CircularProgress, 
+    Autocomplete, Avatar, Chip, useTheme
 } from "@mui/material";
-
-// Assuming primereact ConfirmDialog is needed elsewhere or can be removed if unused here
-// import { ConfirmDialog } from "primereact/confirmdialog";
-
-import ToastApp from "../../ToastApp";
+import {
+    LocalHospital as HospitalIcon,
+    CheckCircle as SeenIcon,
+    Output as CheckoutIcon,
+    PendingActions as WaitingIcon,
+    Search as SearchIcon,
+    CalendarMonth as DateIcon,
+    Person as DoctorIcon
+} from "@mui/icons-material";
+import dayjs from "dayjs";
 import api from "../../utils/Url";
-import { getISTDate } from "../../utils/Constant"; // Assuming this returns { defaultDate, defaultValuestime }
+import ToastApp from "../../ToastApp";
+import { toast } from "react-toastify";
 
-// Define a type for the doctor options for better type safety
 interface DoctorOption {
     label: string;
-    value: number | string; // Allow number for IDs, string maybe for special cases if needed
+    value: number | string;
 }
 
-// Define a type for the patient data rows
 interface PatientDataRow {
     userID: number;
     userName: string;
@@ -42,227 +33,196 @@ interface PatientDataRow {
     patientNotSeen: number;
 }
 
-
-
 export default function DrPatientStatus() {
-    const { defaultValuestime } = getISTDate(); // Get today's date parts
+    const theme = useTheme();
+    const today = dayjs().format("YYYY-MM-DD");
 
-  
-    const [fromDate, setFromDate] = useState<string>( ""); 
-    const [doctor, setDoctor] = useState<number | string>(-1); // Default to "All Doctors" value
+    const [fromDate, setFromDate] = useState<string>(today);
+    const [doctor, setDoctor] = useState<number | string>(-1);
     const [doctorOptions, setDoctorOptions] = useState<DoctorOption[]>([]);
+    
     const [patientData, setPatientData] = useState<PatientDataRow[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
-    const [isDoctorListLoaded, setIsDoctorListLoaded] = useState<boolean>(false); // Flag to track if doctor list is loaded
+    const [isDoctorListLoaded, setIsDoctorListLoaded] = useState<boolean>(false);
 
-    // --- Effects ---
-
-    // Fetch Doctor List on Mount
+    // --- Fetch Doctors ---
     useEffect(() => {
-        const getDr = async () => {
-            // Set loading state for doctor list if needed, though not strictly necessary here
+        const getDoctors = async () => {
             try {
                 const resp = await api.get(`Login/GetUserList?CommonID=-1&Type=3`);
-                const data = resp?.data?.data;
-                const fetchedOptions: DoctorOption[] = data?.map((item: any) => ({
+                const fetchedOptions: DoctorOption[] = resp?.data?.data?.map((item: any) => ({
                     label: item?.userName || "Unknown Doctor",
                     value: item?.userID,
                 })) || [];
-
-                // Add "All Doctors" option at the beginning
-                setDoctorOptions([
-                    { label: "All Doctors", value: -1 },
-                    ...fetchedOptions,
-                ]);
+                setDoctorOptions([{ label: "All Doctors", value: -1 }, ...fetchedOptions]);
             } catch (error) {
-                console.error("Error fetching doctors:", error);
-                // Set minimal options even on error
                 setDoctorOptions([{ label: "All Doctors", value: -1 }]);
-                // Handle error (e.g., show toast)
             } finally {
-                 setIsDoctorListLoaded(true); // Mark doctor list as loaded (or attempted)
+                 setIsDoctorListLoaded(true);
             }
         };
+        getDoctors();
+    }, []);
 
-        getDr();
-    }, []); // Empty dependency array: runs only once on mount
-
+    // --- Fetch Report Data ---
     const fetchData = async () => {
-      
-        if (!fromDate) return; // Basic check
-
+        if (!fromDate) return toast.warning("Please select a date");
         setLoading(true);
-        setPatientData([]); // Clear previous data on new fetch
-
-        const collectData = {
-            fromDate: fromDate,
-            doctorID: doctor, // Send the selected doctor ID (-1 for all)
-            toDate: defaultValuestime || "", // Use current time from util
-            userID: -1,
-            formID: -1,
-            type: 5,
-        };
-
         try {
-            console.log("Fetching data with payload:", collectData);
-            const resp = await api.post(`Reports/GetDoctorWiseAna`, collectData);
-            const data = resp?.data?.result;
-
-            if (data && Array.isArray(data)) {
-                setPatientData(data);
+            const payload = {
+                fromDate: dayjs(fromDate).format("DD MMM YYYY"),
+                doctorID: doctor,
+                toDate: dayjs().format("DD MMM YYYY"), // Current date formatting
+                userID: -1,
+                formID: -1,
+                type: 5,
+            };
+            const resp = await api.post(`Reports/GetDoctorWiseAna`, payload);
+            if (resp?.data?.isSuccess) {
+                setPatientData(resp.data.result || []);
             } else {
-                console.warn("Received non-array or null data:", data);
                 setPatientData([]);
             }
         } catch (error) {
-            console.error("Error fetching patient data:", error);
+            toast.error("Error fetching report data");
             setPatientData([]);
-            // Handle error (e.g., show toast)
         } finally {
             setLoading(false);
         }
     };
 
-  
-    // useEffect(() => {
-        
-    //      if (isDoctorListLoaded) {
-    //          fetchData();
-    //      }
-    // }, [fromDate, doctor, isDoctorListLoaded]); 
-    // Dependencies: trigger fetch on change
+    // Calculate Grand Totals for Top Cards
+    const totalAdmitted = patientData.reduce((acc, curr) => acc + (curr.patientAdmitted || 0), 0);
+    const totalSeen = patientData.reduce((acc, curr) => acc + (curr.seenByDoc || 0), 0);
+    const totalCheckedOut = patientData.reduce((acc, curr) => acc + (curr.patientCheckedOut || 0), 0);
+    const totalNotSeen = patientData.reduce((acc, curr) => acc + (curr.patientNotSeen || 0), 0);
 
-
-    // --- Handlers ---
-    const handleFromDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setFromDate(event.target.value);
-    };
-
-    const handleDoctorChange = (event: React.SyntheticEvent, newValue: DoctorOption | null) => {
-        setDoctor(newValue ? newValue.value : -1);
-    };
-
-    const selectedDoctorObject = doctorOptions.find(opt => opt.value === doctor) || null;
+    const StatCard = ({ title, count, icon: Icon, color, bg }: any) => (
+        <Card elevation={0} sx={{ p: 2, borderRadius: 4, display: 'flex', alignItems: 'center', gap: 2, bgcolor: bg, border: `1px solid ${color}30` }}>
+            <Avatar sx={{ bgcolor: color, width: 56, height: 56 }}><Icon fontSize="large" /></Avatar>
+            <Box>
+                <Typography variant="h4" fontWeight="900" color={color}>{count}</Typography>
+                <Typography variant="subtitle2" color="textSecondary" fontWeight="bold" textTransform="uppercase">{title}</Typography>
+            </Box>
+        </Card>
+    );
 
     return (
-        <React.Fragment>
+        <Box sx={{ animation: 'fadeIn 0.5s ease-in', p: 1 }}>
             <ToastApp />
-            {/* <ConfirmDialog /> */}
 
-            <Card sx={{ width: "100%", m: 0, p: 0, boxShadow: 3, overflow: "hidden" }}>
-                <Paper sx={{ padding: "20px" }}>
-                    <Typography gutterBottom variant="h5" component="div" sx={{ fontWeight: 500, mb: 2 }}>
-                        Doctor Patient Status
-                    </Typography>
-                    <Divider sx={{ mb: 3 }} />
-
-                    {/* --- Filter Controls --- */}
-                    <Grid container spacing={2} alignItems="center" sx={{ mb: 3 }}>
-    <Grid item xs={12} sm={6} md={4} lg={3}>
-        <TextField
-            fullWidth
-            label="From Date"
-            type="date"
-            value={fromDate}
-            onChange={handleFromDateChange}
-            InputLabelProps={{
-                shrink: true,
-            }}
-            size="small"
-        />
-    </Grid>
-
-    <Grid item xs={12} sm={6} md={4} lg={3}>
-        <Autocomplete
-            id="doctor-filter-select"
-            options={doctorOptions}
-            value={selectedDoctorObject}
-            onChange={handleDoctorChange}
-            getOptionLabel={(option) => option.label}
-            isOptionEqualToValue={(option, value) => option.value === value?.value}
-            renderInput={(params) => (
-                <TextField
-                    {...params}
-                    label="Doctor"
-                    placeholder="Select Doctor"
-                    size="small"
-                />
-            )}
-            fullWidth
-            size="small"
-            ListboxProps={{ style: { maxHeight: 250 } }}
-        />
-    </Grid>
-
-    <Grid item xs={12} sm={12} md={4} lg={3}>
-        <Box display="flex" justifyContent="flex-start" alignItems="center" height="100%">
-            <button
-                onClick={fetchData}
-                style={{
-                    padding: "8px 20px",
-                    backgroundColor: "#1976d2",
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: "4px",
-                    cursor: "pointer"
-                }}
-            >
-                Search
-            </button>
-        </Box>
-    </Grid>
-</Grid>
-
-
-                    {/* --- Data Table --- */}
-                    <Grid container spacing={2}>
-                        <Grid item xs={12}>
-                            {loading ? ( 
-                                <Box display="flex" justifyContent="center" alignItems="center" minHeight={200}>
-                                    <CircularProgress />
-                                </Box>
-                            ) : patientData && patientData.length > 0 ? (
-                                <TableContainer component={Paper} elevation={1} variant="outlined">
-                                    <Table sx={{ minWidth: 650 }} aria-label="doctor patient status table" size="small">
-                                        <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
-                                            <TableRow>
-                                                <TableCell sx={{ fontWeight: 'bold' }}>Doctor Name</TableCell>
-                                                <TableCell sx={{ fontWeight: 'bold' }} align="right">Patient Admitted</TableCell>
-                                                <TableCell sx={{ fontWeight: 'bold' }} align="right">Seen By Doctor</TableCell>
-                                                <TableCell sx={{ fontWeight: 'bold' }} align="right">Patient Checked Out</TableCell>
-                                                <TableCell sx={{ fontWeight: 'bold' }} align="right">Patient Not Seen</TableCell>
-                                            </TableRow>
-                                        </TableHead>
-                                        <TableBody>
-                                            {patientData.map((row) => (
-                                                <TableRow
-                                                    key={row.userID}
-                                                    hover
-                                                    sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
-                                                >
-                                                    <TableCell component="th" scope="row">
-                                                        {row.userName}
-                                                    </TableCell>
-                                                    <TableCell align="right">{row.patientAdmitted}</TableCell>
-                                                    <TableCell align="right">{row.seenByDoc}</TableCell>
-                                                    <TableCell align="right">{row.patientCheckedOut}</TableCell>
-                                                    <TableCell align="right">{row.patientNotSeen}</TableCell>
-                                                </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
-                                </TableContainer>
-                            ) : (
-                              
-                                !loading && isDoctorListLoaded &&
-                                <Typography variant="body1" sx={{ textAlign: "center", mt: 4, color: "text.secondary" }}>
-                                    No data available for the selected criteria.
-                                </Typography>
-                            )}
-                        </Grid>
+            {/* HEADER SECTION */}
+            <Typography variant="h5" fontWeight="bold" color="primary.main" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <HospitalIcon fontSize="large" /> Doctor Wise Patient Analytics
+            </Typography>
+            
+            {/* 1. FILTER SECTION */}
+            <Paper elevation={3} sx={{ p: 3, mb: 4, borderRadius: 4, bgcolor: '#fdfdfd' }}>
+                <Grid container spacing={2} alignItems="center">
+                    <Grid item xs={12} sm={4} md={3}>
+                        <TextField
+                            fullWidth size="small" type="date" label="Date"
+                            value={fromDate} onChange={(e) => setFromDate(e.target.value)}
+                            InputProps={{ startAdornment: <DateIcon color="action" sx={{ mr: 1 }} /> }}
+                        />
                     </Grid>
-                </Paper>
-            </Card>
-        </React.Fragment>
+                    <Grid item xs={12} sm={5} md={4}>
+                        <Autocomplete
+                            options={doctorOptions}
+                            value={doctorOptions.find(opt => opt.value === doctor) || doctorOptions[0]}
+                            onChange={(e, newValue) => setDoctor(newValue ? newValue.value : -1)}
+                            renderInput={(params) => (
+                                <TextField {...params} label="Select Doctor" size="small" 
+                                   InputProps={{ ...params.InputProps, startAdornment: <DoctorIcon color="action" sx={{ ml: 1, mr: 1 }} /> }}
+                                />
+                            )}
+                        />
+                    </Grid>
+                    <Grid item xs={12} sm={3} md={2}>
+                        <Button 
+                            fullWidth variant="contained" size="large"
+                            onClick={fetchData} disabled={!isDoctorListLoaded || loading}
+                            startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SearchIcon />}
+                            sx={{ borderRadius: 2, fontWeight: 'bold' }}
+                        >
+                            Generate
+                        </Button>
+                    </Grid>
+                </Grid>
+            </Paper>
+
+            {/* 2. GRAND TOTAL CARDS (Visible only when data exists) */}
+            {patientData.length > 0 && (
+                <Grid container spacing={3} sx={{ mb: 4 }}>
+                    <Grid item xs={12} sm={6} md={3}>
+                        <StatCard title="Total Admitted" count={totalAdmitted} icon={HospitalIcon} color={theme.palette.primary.main} bg="#e3f2fd" />
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                        <StatCard title="Consultation Done" count={totalSeen} icon={SeenIcon} color={theme.palette.success.main} bg="#e8f5e9" />
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                        <StatCard title="Checked Out" count={totalCheckedOut} icon={CheckoutIcon} color={theme.palette.info.main} bg="#e1f5fe" />
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                        <StatCard title="Not Seen (Waiting)" count={totalNotSeen} icon={WaitingIcon} color={theme.palette.warning.main} bg="#fff8e1" />
+                    </Grid>
+                </Grid>
+            )}
+
+            {/* 3. DOCTOR WISE REPORT TABLE */}
+            <Paper elevation={3} sx={{ borderRadius: 4, overflow: "hidden" }}>
+                <Box sx={{ p: 2, bgcolor: theme.palette.grey[100], borderBottom: '1px solid #eee' }}>
+                    <Typography variant="h6" fontWeight="bold">Doctor Wise Breakdown</Typography>
+                </Box>
+                
+                {loading ? ( 
+                    <Box display="flex" justifyContent="center" alignItems="center" minHeight={300}>
+                        <CircularProgress />
+                    </Box>
+                ) : patientData.length > 0 ? (
+                    <TableContainer sx={{ maxHeight: 500 }}>
+                        <Table stickyHeader size="medium">
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell sx={{ fontWeight: 'bold', bgcolor: '#fafafa', fontSize: '1.05rem' }}>Doctor Name</TableCell>
+                                    <TableCell sx={{ fontWeight: 'bold', bgcolor: '#fafafa' }} align="center">Admitted</TableCell>
+                                    <TableCell sx={{ fontWeight: 'bold', bgcolor: '#fafafa' }} align="center">Seen</TableCell>
+                                    <TableCell sx={{ fontWeight: 'bold', bgcolor: '#fafafa' }} align="center">Checked Out</TableCell>
+                                    <TableCell sx={{ fontWeight: 'bold', bgcolor: '#fafafa' }} align="center">Not Seen</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {patientData.map((row, index) => (
+                                    <TableRow key={index} hover sx={{ '&:last-child td': { border: 0 } }}>
+                                        <TableCell>
+                                           <Typography variant="subtitle1" fontWeight="bold" color="primary.main">
+                                               {row.userName}
+                                           </Typography>
+                                        </TableCell>
+                                        <TableCell align="center">
+                                           <Chip label={row.patientAdmitted} size="small" sx={{ fontWeight: 'bold', minWidth: 40 }} />
+                                        </TableCell>
+                                        <TableCell align="center">
+                                           <Chip label={row.seenByDoc} color="success" size="small" variant={row.seenByDoc > 0 ? "filled" : "outlined"} sx={{ fontWeight: 'bold', minWidth: 40 }} />
+                                        </TableCell>
+                                        <TableCell align="center">
+                                           <Chip label={row.patientCheckedOut} color="info" size="small" variant={row.patientCheckedOut > 0 ? "filled" : "outlined"} sx={{ fontWeight: 'bold', minWidth: 40 }} />
+                                        </TableCell>
+                                        <TableCell align="center">
+                                           <Chip label={row.patientNotSeen} color="warning" size="small" variant={row.patientNotSeen > 0 ? "filled" : "outlined"} sx={{ fontWeight: 'bold', minWidth: 40 }} />
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                ) : (
+                    <Box textAlign="center" py={10}>
+                        <WaitingIcon sx={{ fontSize: 60, color: 'text.disabled', mb: 2 }} />
+                        <Typography variant="h6" color="textSecondary">No report data found for this date.</Typography>
+                    </Box>
+                )}
+            </Paper>
+        </Box>
     );
 }

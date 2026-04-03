@@ -33,6 +33,23 @@ import { useFormik } from 'formik';
 import { getISTDate } from '../../utils/Constant';
 import { toast, ToastContainer } from 'react-toastify';
 
+// --- RAZORPAY GLOBAL TYPE ---
+declare global {
+   interface Window {
+      Razorpay: any;
+   }
+}
+
+// --- UTILITY TO LOAD RAZORPAY SCRIPT ---
+const loadRazorpayScript = () => {
+   return new Promise((resolve) => {
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+   });
+};
 
 interface PaymentModalProps {
    open: boolean;
@@ -119,8 +136,6 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ open, onClose, onPay }) => 
    );
 };
 
-
-
 const PatientPharmacyBilling = () => {
    const { defaultValues, defaultValuestime } = getISTDate();
    const [tab, setTab] = useState(0);
@@ -135,7 +150,6 @@ const PatientPharmacyBilling = () => {
    const [Case, setCase] = useState("");
    const [remark, setRemark] = useState("");
    const [billNoOptions, setBillNoOptions] = useState<any>([]);
-
 
    const [doctorDetail, setDoctorDetail] = useState<any>([]);
    const [medicineDetail, setMedicineDetail] = useState<any>([]);
@@ -232,12 +246,9 @@ const PatientPharmacyBilling = () => {
       }
    };
 
-
    useEffect(() => {
       getPatientBill("");
-
    }, [])
-
 
    const getPatientBill = async (caseID: string) => {
       try {
@@ -255,18 +266,10 @@ const PatientPharmacyBilling = () => {
             setMedicineDetail(billRes.data.result1);
             setDoctorDetail(billRes.data.result3);
          }
-
-         console.log("doctorDetail", doctorDetail);
-         console.log("doctorDetail", medicineDetail);
-
-
-
       } catch (error) {
          console.log(error);
       }
-
    }
-
 
    const printTable = () => {
       const tableContent = document.getElementById("billing-table")?.outerHTML;
@@ -280,56 +283,13 @@ const PatientPharmacyBilling = () => {
           <head>
             <title>Billing Details - Print or Save</title>
             <style>
-              body {
-                font-family: Arial, sans-serif;
-                padding: 40px;
-                color: #333;
-                background-color: #fff;
-              }
-              h2 {
-                text-align: center;
-                margin-bottom: 25px;
-                color: #1976d2;
-                border-bottom: 2px solid #1976d2;
-                padding-bottom: 10px;
-                font-size: 22px;
-              }
-              table {
-                width: 100%;
-                border-collapse: collapse;
-                margin-top: 20px;
-                font-size: 14px;
-              }
-              th, td {
-                border: 1px solid #ccc;
-                padding: 10px;
-                text-align: center;
-              }
-              thead {
-                background-color: #1976d2;
-                color: white;
-              }
-              tfoot {
-                background-color: #f5f5f5;
-                font-weight: bold;
-              }
-              @media print {
-                body {
-                  margin: 0;
-                  padding: 0;
-                  zoom: 90%;
-                }
-                h2 {
-                  page-break-before: avoid;
-                }
-                table {
-                  page-break-inside: auto;
-                }
-                tr {
-                  page-break-inside: avoid;
-                  page-break-after: auto;
-                }
-              }
+              body { font-family: Arial, sans-serif; padding: 40px; color: #333; background-color: #fff; }
+              h2 { text-align: center; margin-bottom: 25px; color: #1976d2; border-bottom: 2px solid #1976d2; padding-bottom: 10px; font-size: 22px; }
+              table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
+              th, td { border: 1px solid #ccc; padding: 10px; text-align: center; }
+              thead { background-color: #1976d2; color: white; }
+              tfoot { background-color: #f5f5f5; font-weight: bold; }
+              @media print { body { margin: 0; padding: 0; zoom: 90%; } h2 { page-break-before: avoid; } table { page-break-inside: auto; } tr { page-break-inside: avoid; page-break-after: auto; } }
             </style>
           </head>
           <body>
@@ -340,8 +300,6 @@ const PatientPharmacyBilling = () => {
       `);
 
       printWindow.document.close();
-
-      // Wait for print window to fully load before printing
       printWindow.onload = () => {
          setTimeout(() => {
             printWindow.print();
@@ -350,36 +308,24 @@ const PatientPharmacyBilling = () => {
       };
    };
 
-
-
    const getBillReciept = async (caseId: string, billId: string): Promise<void> => {
       try {
          const payload = {
-            patientCaseID: caseId,
-            patientCaseNo: "",
-            admNo: "1",
-            patientBillID: billId,
-            userID: -1,
-            formID: -1,
-            type: 1,
+            patientCaseID: caseId, patientCaseNo: "", admNo: "1", patientBillID: billId, userID: -1, formID: -1, type: 1,
          };
 
          const { data } = await api.post("GetPatientPharmaBill", payload);
 
          if (data?.isSuccess) {
-            console.log("@@@@", data.result1);
             setBillReceiptData(data.result1 ?? []);
             setBillReceiptData1(data.result2 ?? []);
          } else {
             console.warn("Bill receipt fetch failed.");
-            // Optional toast/alert: toast.warning("No billing data found.");
          }
       } catch (error) {
          console.error("Error fetching bill receipt:", error);
-         // Optional toast/alert: toast.error("Failed to fetch billing information.");
       }
    };
-
 
    const getPatientBillNumber = async (caseID) => {
       try {
@@ -387,39 +333,22 @@ const PatientPharmacyBilling = () => {
          const response = await api.post("GetPatientBillNo", payload);
          if (response.data.isSuccess) {
             const data = response.data.result;
-            const arr = data.map((item) => {
-               return {
-                  ...item,
-                  label: item.billNo,
-                  value: item.billID
-               }
-            })
+            const arr = data.map((item) => ({ ...item, label: item.billNo, value: item.billID }))
             setBillNoOptions(arr);
          }
-
       } catch (error) {
          console.log(error)
       }
-
    }
 
    const getItemBalance = async (itemID: string, event: React.MouseEvent) => {
-      setAnchorPos({ x: event.clientX, y: event.clientY }); // Track mouse pos
-      setShowTable(true); // Show the floating table
+      setAnchorPos({ x: event.clientX, y: event.clientY }); 
+      setShowTable(true); 
 
       try {
          const payload = {
-            baarCode: "",
-            itemID: itemID,
-            itemCatID: -1,
-            sectionID: -1,
-            fundID: -1,
-            productID: -1,
-            unitID: -1,
-            curDate: new Date().toISOString(),
-            userID: -1,
-            formID: -1,
-            type: 2,
+            baarCode: "", itemID: itemID, itemCatID: -1, sectionID: -1, fundID: -1, productID: -1, unitID: -1,
+            curDate: new Date().toISOString(), userID: -1, formID: -1, type: 2,
          };
          const response = await api.post("InventoryForm/GetItemBalanceWithBaarCode_1", payload);
          setItemBalance(response.data.result || []);
@@ -427,7 +356,6 @@ const PatientPharmacyBilling = () => {
          console.log(error);
       }
    };
-
 
    const handleQuantityChange = (row, value) => {
       const itemPrice = row.salePricePerUnit;
@@ -450,7 +378,6 @@ const PatientPharmacyBilling = () => {
       addTableData(updatedRow);
    };
 
-
    const setUnitPrice = (row, itemPrice) => {
       const updatedRow = {
          ...row,
@@ -471,15 +398,8 @@ const PatientPharmacyBilling = () => {
       addTableData(updatedRow);
    };
 
-
    const setBillTableData = (data, paidAmount: any = undefined) => {
-      let grossAmt = 0;
-      let finalGrossAmt = 0;
-      let discountAmt = 0;
-      let netAmt = 0;
-      let totalPayable = 0;
-      let actPayAmt = 0;
-      let balanceAmt = 0;
+      let grossAmt = 0, finalGrossAmt = 0, discountAmt = 0, netAmt = 0, totalPayable = 0, actPayAmt = 0, balanceAmt = 0;
 
       data.forEach(item => {
          grossAmt += item.grossAmount;
@@ -490,11 +410,9 @@ const PatientPharmacyBilling = () => {
       });
 
       if (paidAmount === "") {
-         // Case: input cleared
          actPayAmt = 0;
          balanceAmt = totalPayable;
       } else if (paidAmount === undefined) {
-         // Case: initial load
          actPayAmt = totalPayable;
          balanceAmt = 0;
       } else {
@@ -509,71 +427,26 @@ const PatientPharmacyBilling = () => {
          }
       }
 
-      setbillPayload({
-         grossAmt,
-         finalGrossAmt,
-         discountAmt,
-         balanceAmt,
-         netAmt,
-         actPayAmt,
-      });
+      setbillPayload({ grossAmt, finalGrossAmt, discountAmt, balanceAmt, netAmt, actPayAmt, });
    };
 
    const addTableData = (row: any) => {
-      console.log("rowData", row);
-
       const index = typPatientBill.findIndex(e => e.col8 === row.invParameterID);
-
       const dataRow = {
-         "col1": row.patientBillID,
-         "col2": row.patientBillCompID,
-         "col3": row.patientID,
-         "col4": row.patientCaseID,
-         "col5": row.admNo,
-         "col6": row.invGroupID,
-         "col7": row.discountParameterID,
-         "col8": row.invParameterID,
-         "col9": row.noOfDays,
-         "col10": row.quantityPerDay,
-         "col11": row.compID,
-         "col12": row.compRebate,
-         "col13": row.insuranceCompID,
-         "col14": row.insuranceRebate,
-         "col15": row.grossAmount,
-         "col16": row.netAmount,
-         "col17": row.finalGrossAmount,
-         "col18": row.isConsultency ? "1" : "0",
-         "col19": row.isMedic ? "1" : "0",
-         "col20": row.isRoom ? "1" : "0",
-         "col21": row.isManual ? "1" : "0",
-         "col22": row.remark,
-         "col23": row.barCode,
-         "col24": row.qty,
-         "col25": row.itemInID,
-         "col26": row.itemCatID,
-         "col27": row.productID,
-         "col28": row.unitID,
-         "col29": row.salePricePerUnit,
-         "col30": row.finalSalePricePerUnit,
-         "col31": "",
-         "col32": "",
-         "col33": "",
-         "col34": "",
-         "col35": "",
-         "col36": "",
-         "col37": "",
-         "col38": "",
-         "col39": "",
-         "col40": ""
+         "col1": row.patientBillID, "col2": row.patientBillCompID, "col3": row.patientID, "col4": row.patientCaseID, "col5": row.admNo,
+         "col6": row.invGroupID, "col7": row.discountParameterID, "col8": row.invParameterID, "col9": row.noOfDays, "col10": row.quantityPerDay,
+         "col11": row.compID, "col12": row.compRebate, "col13": row.insuranceCompID, "col14": row.insuranceRebate, "col15": row.grossAmount,
+         "col16": row.netAmount, "col17": row.finalGrossAmount, "col18": row.isConsultency ? "1" : "0", "col19": row.isMedic ? "1" : "0", "col20": row.isRoom ? "1" : "0",
+         "col21": row.isManual ? "1" : "0", "col22": row.remark, "col23": row.barCode, "col24": row.qty, "col25": row.itemInID, "col26": row.itemCatID,
+         "col27": row.productID, "col28": row.unitID, "col29": row.salePricePerUnit, "col30": row.finalSalePricePerUnit, "col31": "", "col32": "",
+         "col33": "", "col34": "", "col35": "", "col36": "", "col37": "", "col38": "", "col39": "", "col40": ""
       };
 
       if (index !== -1) {
-         // Update existing row
          const updatedList = [...typPatientBill];
          updatedList[index] = dataRow;
          settypPatientBill(updatedList);
       } else {
-         // Add new row
          settypPatientBill([...typPatientBill, dataRow]);
       }
    };
@@ -582,25 +455,76 @@ const PatientPharmacyBilling = () => {
       setModalOpen(false);
    };
 
-   const handlePay = async () => {
-      console.log('Payment Triggered');
+   // --- ACTUAL DATABASE SAVING UPON SUCCESSFUL PAYMENT ---
+   const completeDatabasePayment = async (paymentId: string) => {
       try {
-         const payload = { ...finalBillPayload, type: 2 }
+         const payload = { 
+            ...finalBillPayload, 
+            type: 2, 
+            payTypeDetail: "Razorpay", // Tagging payment mode
+            payTypeNo: paymentId       // Tagging payment ID from Razorpay
+         };
 
          const response = await api.post('AddPatientPharmaBill', payload);
          if (response.data.isSuccess) {
-            toast.success(response.data.msg);
+            toast.success("Pharmacy Bill Paid Successfully!");
             setModalOpen(false);
-         }
-         else {
-            toast.error(response.data.msg)
+         } else {
+            toast.error(response.data.msg);
          }
       } catch (error) {
          console.log(error);
+         toast.error("Payment successful but failed to update database.");
       }
-
    };
 
+   // --- RAZORPAY INTEGRATION LOGIC TRIGGERED BY 'PAY NOW' ---
+   const handlePay = async () => {
+      const res = await loadRazorpayScript();
+
+      if (!res) {
+         toast.error("Razorpay SDK failed to load. Are you online?");
+         return;
+      }
+
+      // Final Bill Payload me paidAmt string type me aati hai, usko convert kiya
+      const payAmount = parseFloat(finalBillPayload?.paidAmt || "0");
+      if (payAmount <= 0) {
+         toast.warning("Payment amount must be greater than zero.");
+         return;
+      }
+
+      const options = {
+         key: "rzp_test_SYZuRxwlKGWymN", // ✅ Aapka Razorpay Test Key
+         amount: Math.round(payAmount * 100), // Razorpay accepts value in paise (multiplying by 100)
+         currency: "INR",
+         name: "Pharmacy Store",
+         description: `Pharmacy Bill Payment - Case No: ${Case}`,
+         handler: function (response: any) {
+            // SUCCESS PAR YE FUNCTION CHALEGA
+            const paymentId = response.razorpay_payment_id;
+            
+            // Uske baad database save API call hogi (type: 2 update karne ke liye)
+            completeDatabasePayment(paymentId);
+         },
+         prefill: {
+            name: patientInfo?.candName || "",
+            email: patientInfo?.email || "",
+            contact: patientInfo?.curMobileNo || ""
+         },
+         theme: {
+            color: "#1976d2"
+         }
+      };
+
+      const paymentObject = new window.Razorpay(options);
+      
+      paymentObject.on('payment.failed', function (response: any) {
+         toast.error(`Payment Failed: ${response.error.description}`);
+      });
+
+      paymentObject.open();
+   };
 
    const hideTable = () => {
       setShowTable(false);
@@ -614,36 +538,35 @@ const PatientPharmacyBilling = () => {
       setTab(newValue);
    };
 
-
    const formik = useFormik({
       initialValues: {
-         "typPatientBill": [],
-         "totDiscountAmt": 0,
-         "billDate": defaultValues,
-         "patientBillID": -1,
-         "paidAmt": "",
-         "payDate": "",
-         "payTypeID": -1,
-         "payTypeNo": "",
-         "payTypeDetail": "",
-         "isCancel": false,
-         "userID": -1,
-         "formID": -1,
-         "type": 1
+         "typPatientBill": [], "totDiscountAmt": 0, "billDate": defaultValues, "patientBillID": -1, "paidAmt": "", "payDate": "", "payTypeID": -1,
+         "payTypeNo": "", "payTypeDetail": "", "isCancel": false, "userID": -1, "formID": -1, "type": 1
       },
       onSubmit: async (values) => {
          try {
-            console.log("formik", { ...values, totDiscountAmt: billPayload.discountAmt, paidAmt: (billPayload.actPayAmt).toString(), typPatientBill: typPatientBill })
-            const response = await api.post('AddPatientPharmaBill', { ...values, totDiscountAmt: billPayload.discountAmt, paidAmt: (billPayload.actPayAmt).toString(), typPatientBill: typPatientBill });
+            // STEP 1: Pehle Database me Data Create hota hai
+            const response = await api.post('AddPatientPharmaBill', { 
+               ...values, 
+               totDiscountAmt: billPayload.discountAmt, 
+               paidAmt: (billPayload.actPayAmt).toString(), 
+               typPatientBill: typPatientBill 
+            });
+
             if (response.data.isSuccess) {
                toast.success(response.data.msg);
-               setFinalBillPayload({ ...values, patientBillID: response.data.result[0].billID, totDiscountAmt: billPayload.discountAmt, paidAmt: (billPayload.actPayAmt).toString(), typPatientBill: typPatientBill })
+               setFinalBillPayload({ 
+                  ...values, 
+                  patientBillID: response.data.result[0].billID, 
+                  totDiscountAmt: billPayload.discountAmt, 
+                  paidAmt: (billPayload.actPayAmt).toString(), 
+                  typPatientBill: typPatientBill 
+               });
+               // STEP 2: Database me success hone ke baad Payment Modal khulega
                setModalOpen(true);
-            }
-            else {
+            } else {
                toast.error(response.data.msg)
             }
-
          } catch (error) {
             console.log(error);
          }
@@ -652,7 +575,6 @@ const PatientPharmacyBilling = () => {
 
    return (
       <Container maxWidth="lg">
-
          <ToastContainer />
 
          <Paper elevation={3} sx={{ p: 3, borderRadius: 3 }}>
@@ -669,26 +591,14 @@ const PatientPharmacyBilling = () => {
                      getOptionLabel={(option) => option.patientName || ""}
                      value={selectedPatient}
                      onChange={(e, newValue) => {
-                        if (newValue) {
-                           handlePatientSelect(newValue);
-                        } else {
-                           setSelectedPatient(null);
-                           setPatientInfo(null);
-                           setVisitInfo(null);
-                        }
+                        if (newValue) { handlePatientSelect(newValue); } 
+                        else { setSelectedPatient(null); setPatientInfo(null); setVisitInfo(null); }
                      }}
-                     renderInput={(params) => (
-                        <TextField {...params} label="Search Patient" size="small" />
-                     )}
+                     renderInput={(params) => (<TextField {...params} label="Search Patient" size="small" />)}
                   />
                </Grid>
                <Grid item xs={12} sm={3}>
-                  <TextField
-                     label="Patient No"
-                     value={selectedPatient?.patientNo || ""}
-                     fullWidth
-                     size="small"
-                  />
+                  <TextField label="Patient No" value={selectedPatient?.patientNo || ""} fullWidth size="small" />
                </Grid>
                <Grid item xs={12} sm={3}>
                   <Autocomplete
@@ -701,18 +611,11 @@ const PatientPharmacyBilling = () => {
                         getPatientBillNumber(newValue.patientCaseID)
                         setCase(newValue?.patientCaseNo || "")
                      }}
-                     renderInput={(params) => (
-                        <TextField {...params} label="Case No" size="small" />
-                     )}
+                     renderInput={(params) => (<TextField {...params} label="Case No" size="small" />)}
                   />
                </Grid>
                <Grid item xs={12} sm={3}>
-                  <TextField
-                     label="Admission No"
-                     value={visitInfo?.admNo || ""}
-                     fullWidth
-                     size="small"
-                  />
+                  <TextField label="Admission No" value={visitInfo?.admNo || ""} fullWidth size="small" />
                </Grid>
             </Grid>
 
@@ -737,18 +640,8 @@ const PatientPharmacyBilling = () => {
                         </Grid>
                      </Grid>
                      <Grid item xs={12} md={3} display="flex" justifyContent="center" alignItems="center">
-                        <Box
-                           component="img"
-                           src={`data:image/jpeg;base64,${patientInfo.photo}`}
-                           alt="Patient"
-                           sx={{
-                              width: 150,
-                              height: 150,
-                              objectFit: "cover",
-                              borderRadius: 2,
-                              border: "2px solid #ccc",
-                           }}
-                        />
+                        <Box component="img" src={`data:image/jpeg;base64,${patientInfo.photo}`} alt="Patient"
+                           sx={{ width: 150, height: 150, objectFit: "cover", borderRadius: 2, border: "2px solid #ccc" }} />
                      </Grid>
                   </Grid>
                </Paper>
@@ -778,9 +671,7 @@ const PatientPharmacyBilling = () => {
                            </TableHead>
                            <TableBody>
                               {doctorDetail.length === 0 ? (
-                                 <TableRow>
-                                    <TableCell colSpan={5} align="center">No data available</TableCell>
-                                 </TableRow>
+                                 <TableRow><TableCell colSpan={5} align="center">No data available</TableCell></TableRow>
                               ) : (
                                  doctorDetail.map((row, index) => (
                                     <TableRow key={index} hover>
@@ -810,7 +701,7 @@ const PatientPharmacyBilling = () => {
                                  <TableCell sx={{ fontWeight: "bold", color: "#fff" }}>Disc Amt</TableCell>
                                  <TableCell sx={{ fontWeight: "bold", color: "#fff" }}>Final Gross Amt</TableCell>
                                  <TableCell sx={{ fontWeight: "bold", color: "#fff" }}>Net Amount</TableCell>
-                                 <TableCell sx={{ fontWeight: "bold", color: "#fff" }}>Action</TableCell>
+                                 
                               </TableRow>
                            </TableHead>
                            <TableBody>
@@ -818,29 +709,15 @@ const PatientPharmacyBilling = () => {
                                  medicineDetail.map((row, index) => (
                                     <TableRow key={index}>
                                        <TableCell>
-                                          <Typography
-                                             sx={{ color: "#1976d2", position: "relative" }}
-                                             onMouseOver={(e) => getItemBalance(row.invParameterID, e)}
-                                          >
+                                          <Typography sx={{ color: "#1976d2", position: "relative" }} onMouseOver={(e) => getItemBalance(row.invParameterID, e)}>
                                              {row.invParameterName}
                                           </Typography>
 
                                           {/* Floating Table */}
                                           {showTable && (
                                              <Box
-                                                sx={{
-                                                   position: "fixed",
-                                                   top: anchorPos.y + 10,
-                                                   left: anchorPos.x + 10,
-                                                   zIndex: 999,
-                                                   backgroundColor: "#fff",
-                                                   borderRadius: 2,
-                                                   boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
-                                                   width: "auto",
-                                                   maxWidth: 900,
-                                                   p: 2,
-                                                   minWidth: 600,
-                                                   transition: "opacity 0.2s ease-in-out",
+                                                sx={{ position: "fixed", top: anchorPos.y + 10, left: anchorPos.x + 10, zIndex: 999, backgroundColor: "#fff",
+                                                   borderRadius: 2, boxShadow: "0 4px 20px rgba(0,0,0,0.2)", width: "auto", maxWidth: 900, p: 2, minWidth: 600, transition: "opacity 0.2s ease-in-out",
                                                 }}
                                                 onMouseLeave={hideTable}
                                              >
@@ -859,24 +736,10 @@ const PatientPharmacyBilling = () => {
                                                       </TableHead>
                                                       <TableBody>
                                                          {itemBalance.map((item, index) => (
-                                                            <TableRow
-                                                               key={index}
-                                                               sx={{
-                                                                  "&:hover": {
-                                                                     backgroundColor: "#f1f8ff",
-                                                                  },
-                                                               }}
-                                                            >
+                                                            <TableRow key={index} sx={{ "&:hover": { backgroundColor: "#f1f8ff", }, }} >
                                                                <TableCell>
-                                                                  <Button
-                                                                     variant="outlined"
-                                                                     size="small"
-                                                                     color="primary"
-                                                                     sx={{ fontSize: "0.75rem", textTransform: "none" }}
-                                                                     onClick={() => {
-                                                                        setUnitPrice(row, item.salePricePerUnit);
-                                                                        // addTableData(row);
-                                                                     }}
+                                                                  <Button variant="outlined" size="small" color="primary" sx={{ fontSize: "0.75rem", textTransform: "none" }}
+                                                                     onClick={() => { setUnitPrice(row, item.salePricePerUnit); }}
                                                                   >
                                                                      {item.voucherNo}
                                                                   </Button>
@@ -885,11 +748,7 @@ const PatientPharmacyBilling = () => {
                                                                <TableCell>{parseFloat(item.salePricePerUnit).toFixed(3)}</TableCell>
                                                                <TableCell>{item.isBilled ? "YES" : "NO"}</TableCell>
                                                                <TableCell>
-                                                                  {new Date(item.eslDate).toLocaleDateString("en-GB", {
-                                                                     day: "2-digit",
-                                                                     month: "short",
-                                                                     year: "numeric",
-                                                                  })}
+                                                                  {new Date(item.eslDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric", })}
                                                                </TableCell>
                                                                <TableCell>{parseFloat(item.balanceQuantity).toFixed(2)}</TableCell>
                                                                <TableCell>{parseFloat(item.balQuantitySum).toFixed(2)}</TableCell>
@@ -899,34 +758,19 @@ const PatientPharmacyBilling = () => {
                                                    </Table>
                                                 </TableContainer>
                                              </Box>
-
                                           )}
                                        </TableCell>
                                        <TableCell>{row.dose}</TableCell>
                                        <TableCell>{row.salePricePerUnit}</TableCell>
                                        <TableCell>
-                                          <TextField
-                                             size="small"
-                                             value={row.qty}
-                                             onChange={(e) => handleQuantityChange(row, parseInt(e.target.value || "0"))}
-                                             sx={{ width: 80 }}
-                                          />
+                                          <TextField size="small" value={row.qty} onChange={(e) => handleQuantityChange(row, parseInt(e.target.value || "0"))} sx={{ width: 80 }} />
                                        </TableCell>
                                        <TableCell>{row.grossAmount}</TableCell>
                                        <TableCell>{row.compRebate}</TableCell>
                                        <TableCell>{row.discountAmount || "0.00"}</TableCell>
                                        <TableCell>{row.finalGrossAmount}</TableCell>
                                        <TableCell>{row.netAmount}</TableCell>
-                                       <TableCell>
-                                          <Button
-                                             variant="outlined"
-                                             color="error"
-                                             size="small"
-                                             onClick={() => handleDeleteTest(index)}
-                                          >
-                                             Delete
-                                          </Button>
-                                       </TableCell>
+                                      
                                     </TableRow>
                                  ))}
                            </TableBody>
@@ -954,15 +798,7 @@ const PatientPharmacyBilling = () => {
                                  <TableCell>{billPayload.balanceAmt}</TableCell>
                                  <TableCell>{billPayload.netAmt}</TableCell>
                                  <TableCell>
-                                    <TextField
-                                       size="small"
-                                       value={billPayload.actPayAmt}
-                                       onChange={(e) =>
-                                          setBillTableData(medicineDetail, e.target.value)
-                                       }
-                                       onFocus={(e) => e.target.select()}
-                                       sx={{ width: 100 }}
-                                    />
+                                    <TextField size="small" value={billPayload.actPayAmt} onChange={(e) => setBillTableData(medicineDetail, e.target.value)} onFocus={(e) => e.target.select()} sx={{ width: 100 }} />
                                  </TableCell>
                               </TableRow>
                            </TableBody>
@@ -970,28 +806,10 @@ const PatientPharmacyBilling = () => {
                      </TableContainer>
 
                      {/* Remark and Save Button */}
-                     <Typography fontWeight="bold" mb={1}>
-                        Remark
-                     </Typography>
-                     <TextField
-                        fullWidth
-                        multiline
-                        rows={2}
-                        value={remark}
-                        onChange={(e) => setRemark(e.target.value)}
-                        placeholder="maxLength is 200"
-                        inputProps={{ maxLength: 200 }}
-                     />
+                     <Typography fontWeight="bold" mb={1}>Remark</Typography>
+                     <TextField fullWidth multiline rows={2} value={remark} onChange={(e) => setRemark(e.target.value)} placeholder="maxLength is 200" inputProps={{ maxLength: 200 }} />
                      <Box mt={2} textAlign="right">
-                        <Button
-                           variant="contained"
-                           size="small"
-                           sx={{
-                              backgroundColor: "#1976d2",
-                              fontWeight: "bold",
-                              textTransform: "none",
-                              "&:hover": { backgroundColor: "#115293" },
-                           }}
+                        <Button variant="contained" size="small" sx={{ backgroundColor: "#1976d2", fontWeight: "bold", textTransform: "none", "&:hover": { backgroundColor: "#115293" }, }}
                            onClick={() => formik.handleSubmit()}
                         >
                            Save Bill
@@ -1000,22 +818,16 @@ const PatientPharmacyBilling = () => {
                      <PaymentModal open={modalOpen} onClose={handleModalClose} onPay={handlePay} />
                   </>
 
-
                ) : (
                   <>
                      <Grid container spacing={2} alignItems="center" sx={{ mb: 2 }}>
                         <Grid item xs={12} sm={3}>
-                           <Autocomplete
-                              disablePortal
-                              fullWidth
-                              options={billNoOptions}
+                           <Autocomplete disablePortal fullWidth options={billNoOptions}
                               onChange={(e, newValue: any) => {
                                  if (!newValue) return;
                                  getBillReciept(newValue.patientCaseID, newValue.billID);
                               }}
-                              renderInput={(params) => (
-                                 <TextField {...params} label="Bill No" size="small" />
-                              )}
+                              renderInput={(params) => (<TextField {...params} label="Bill No" size="small" />)}
                            />
                         </Grid>
                         <Grid item>
@@ -1026,40 +838,18 @@ const PatientPharmacyBilling = () => {
                      </Grid>
 
                      <Table size="small" id="billing-table">
-                        {/* Table Head */}
                         <TableHead sx={{ backgroundColor: '#0288d1' }}>
                            <TableRow>
-                              {[
-                                 'Medicine',
-                                 'Qty',
-                                 'Payable %',
-                                 'Gross Amount',
-                                 'Final Gross Amount',
-                                 'Net Amount'
-                              ].map((col) => (
-                                 <TableCell
-                                    key={col}
-                                    sx={{
-                                       color: 'white',
-                                       fontWeight: 'bold',
-                                       textAlign: 'center',
-                                       py: 1
-                                    }}
-                                 >
+                              {['Medicine', 'Qty', 'Payable %', 'Gross Amount', 'Final Gross Amount', 'Net Amount'].map((col) => (
+                                 <TableCell key={col} sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center', py: 1 }} >
                                     {col}
                                  </TableCell>
                               ))}
                            </TableRow>
                         </TableHead>
-
-                        {/* Table Body */}
                         <TableBody>
                            {billReceiptData.length === 0 ? (
-                              <TableRow>
-                                 <TableCell colSpan={6} align="center" sx={{ fontStyle: 'italic', py: 2 }}>
-                                    No data found
-                                 </TableCell>
-                              </TableRow>
+                              <TableRow><TableCell colSpan={6} align="center" sx={{ fontStyle: 'italic', py: 2 }}>No data found</TableCell></TableRow>
                            ) : (
                               billReceiptData.map((row, idx) => (
                                  <TableRow key={idx} hover>
@@ -1073,41 +863,26 @@ const PatientPharmacyBilling = () => {
                               ))
                            )}
                         </TableBody>
-
-                        {/* Table Summary Footer */}
                         <TableFooter>
                            {billReceiptData1.length > 0 && (
                               <React.Fragment>
                                  <TableRow>
-                                    <TableCell colSpan={5} sx={{ fontWeight: 'bold' }}>
-                                       Total Net Amt
-                                    </TableCell>
-                                    <TableCell align="left">
-                                       {billReceiptData1[0]?.totNetAmount ?? '0.00'}
-                                    </TableCell>
+                                    <TableCell colSpan={5} sx={{ fontWeight: 'bold' }}>Total Net Amt</TableCell>
+                                    <TableCell align="left">{billReceiptData1[0]?.totNetAmount ?? '0.00'}</TableCell>
                                  </TableRow>
                                  <TableRow>
-                                    <TableCell colSpan={5} sx={{ fontWeight: 'bold' }}>
-                                       Total Received Amt
-                                    </TableCell>
-                                    <TableCell align="left">
-                                       {billReceiptData1[0]?.actualPayAmt ?? '0.00'}
-                                    </TableCell>
+                                    <TableCell colSpan={5} sx={{ fontWeight: 'bold' }}>Total Received Amt</TableCell>
+                                    <TableCell align="left">{billReceiptData1[0]?.actualPayAmt ?? '0.00'}</TableCell>
                                  </TableRow>
                                  <TableRow>
-                                    <TableCell colSpan={5} sx={{ fontWeight: 'bold' }}>
-                                       Total Balance Amt
-                                    </TableCell>
-                                    <TableCell align="left">
-                                       {billReceiptData1[0]?.balanceAmount ?? '0.00'}
-                                    </TableCell>
+                                    <TableCell colSpan={5} sx={{ fontWeight: 'bold' }}>Total Balance Amt</TableCell>
+                                    <TableCell align="left">{billReceiptData1[0]?.balanceAmount ?? '0.00'}</TableCell>
                                  </TableRow>
                               </React.Fragment>
                            )}
                         </TableFooter>
                      </Table>
                   </>
-
                )}
             </Paper>
          </Paper>
@@ -1126,4 +901,3 @@ const Info = ({ label, value }: { label: string; value: any }) => (
 );
 
 export default PatientPharmacyBilling;
-

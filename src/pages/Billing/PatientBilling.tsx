@@ -30,6 +30,24 @@ import { toast, ToastContainer } from 'react-toastify';
 import PatientPharmacyBilling from './PatientPharmacyBilling';
 import PayPartialPharmacyBilling from './PayPartialPharmacyBilling';
 
+// Declare window interface for Razorpay
+declare global {
+   interface Window {
+      Razorpay: any;
+   }
+}
+
+// Utility to load Razorpay Script
+const loadRazorpayScript = () => {
+   return new Promise((resolve) => {
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+   });
+};
+
 const PatientBilling = () => {
    const { defaultValues, defaultValuestime } = getISTDate();
    const [maintab, setMainTab] = useState(0);
@@ -49,49 +67,12 @@ const PatientBilling = () => {
    const [remark, setRemark] = useState("");
    const [billNoOptions, setBillNoOptions] = useState<any>([]);
 
-
    const [typPatientBill, settypPatientBill] = useState<any>([
       {
-         "col1": "",
-         "col2": "",
-         "col3": "",
-         "col4": "",
-         "col5": "",
-         "col6": "",
-         "col7": "",
-         "col8": "",
-         "col9": "",
-         "col10": "",
-         "col11": "",
-         "col12": "",
-         "col13": "",
-         "col14": "",
-         "col15": "",
-         "col16": "",
-         "col17": "",
-         "col18": "",
-         "col19": "",
-         "col20": "",
-         "col21": "",
-         "col22": "",
-         "col23": "",
-         "col24": "",
-         "col25": "",
-         "col26": "",
-         "col27": "",
-         "col28": "",
-         "col29": "",
-         "col30": "",
-         "col31": "",
-         "col32": "",
-         "col33": "",
-         "col34": "",
-         "col35": "",
-         "col36": "",
-         "col37": "",
-         "col38": "",
-         "col39": "",
-         "col40": ""
+         "col1": "", "col2": "", "col3": "", "col4": "", "col5": "", "col6": "", "col7": "", "col8": "", "col9": "", "col10": "",
+         "col11": "", "col12": "", "col13": "", "col14": "", "col15": "", "col16": "", "col17": "", "col18": "", "col19": "", "col20": "",
+         "col21": "", "col22": "", "col23": "", "col24": "", "col25": "", "col26": "", "col27": "", "col28": "", "col29": "", "col30": "",
+         "col31": "", "col32": "", "col33": "", "col34": "", "col35": "", "col36": "", "col37": "", "col38": "", "col39": "", "col40": ""
       }
    ]);
 
@@ -169,7 +150,6 @@ const PatientBilling = () => {
       }
    };
 
-
    const getPatientBill = async (caseID: string) => {
       try {
          const payload = {
@@ -212,33 +192,14 @@ const PatientBilling = () => {
                "col21": billRes.data.result1[0].isManual ? "1" : "0",
                "col22": billRes.data.result1[0].remark || remark,
                "col23": billRes.data.result1[0].barCode,
-               "col24": "",
-               "col25": "",
-               "col26": "",
-               "col27": "",
-               "col28": "",
-               "col29": "",
-               "col30": "",
-               "col31": "",
-               "col32": "",
-               "col33": "",
-               "col34": "",
-               "col35": "",
-               "col36": "",
-               "col37": "",
-               "col38": "",
-               "col39": "",
-               "col40": ""
+               "col24": "", "col25": "", "col26": "", "col27": "", "col28": "", "col29": "", "col30": "",
+               "col31": "", "col32": "", "col33": "", "col34": "", "col35": "", "col36": "", "col37": "", "col38": "", "col39": "", "col40": ""
             }
          ])
-
-
       } catch (error) {
          console.log(error);
       }
-
    }
-
 
    const printTable = () => {
       const tableContent = document.getElementById("billing-table")?.outerHTML;
@@ -252,46 +213,13 @@ const PatientBilling = () => {
           <head>
             <title>Billing Details - Print or Save</title>
             <style>
-              body {
-                font-family: Arial, sans-serif;
-                padding: 30px;
-                color: #333;
-              }
-              h2 {
-                text-align: center;
-                margin-bottom: 20px;
-                color: #1976d2;
-                border-bottom: 2px solid #1976d2;
-                padding-bottom: 10px;
-              }
-              table {
-                width: 100%;
-                border-collapse: collapse;
-                margin-top: 20px;
-                font-size: 14px;
-              }
-              th, td {
-                border: 1px solid #ccc;
-                padding: 10px;
-                text-align: center;
-              }
-              thead {
-                background-color: #0288d1;
-                color: white;
-              }
-              tfoot {
-                background-color: #f5f5f5;
-                font-weight: bold;
-              }
-              @media print {
-                body {
-                  margin: 0;
-                  padding: 0;
-                }
-                h2 {
-                  page-break-before: avoid;
-                }
-              }
+              body { font-family: Arial, sans-serif; padding: 30px; color: #333; }
+              h2 { text-align: center; margin-bottom: 20px; color: #1976d2; border-bottom: 2px solid #1976d2; padding-bottom: 10px; }
+              table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
+              th, td { border: 1px solid #ccc; padding: 10px; text-align: center; }
+              thead { background-color: #0288d1; color: white; }
+              tfoot { background-color: #f5f5f5; font-weight: bold; }
+              @media print { body { margin: 0; padding: 0; } h2 { page-break-before: avoid; } }
             </style>
           </head>
           <body>
@@ -302,34 +230,22 @@ const PatientBilling = () => {
       `);
 
       printWindow.document.close();
-
-      // ✅ Wait for full load before printing
       printWindow.onload = () => {
          setTimeout(() => {
             printWindow.print();
             printWindow.close();
-         }, 500); // Small delay ensures proper rendering
+         }, 500);
       };
    };
-
-
-
 
    const getBillReciept = async (caseId: string, billId: string) => {
       try {
          const payload = {
-            "patientCaseID": caseId,
-            "patientCaseNo": "",
-            "admNo": "1",
-            "patientBillID": billId,
-            "userID": -1,
-            "formID": -1,
-            "type": 1
+            "patientCaseID": caseId, "patientCaseNo": "", "admNo": "1", "patientBillID": billId, "userID": -1, "formID": -1, "type": 1
          }
          const billRes = await api.post(`GetPatientBill`, payload);
          setBillReceiptData(billRes.data.result1 || []);
          setBillReceiptData1(billRes.data.result2 || []);
-
       } catch (error) {
          console.log(error)
       }
@@ -341,38 +257,98 @@ const PatientBilling = () => {
          const response = await api.post("GetPatientBillNo", payload);
          if (response.data.isSuccess) {
             const data = response.data.result;
-            const arr = data.map((item) => {
-               return {
-                  ...item,
-                  label: item.billNo,
-                  value: item.billID
-               }
-            })
+            const arr = data.map((item) => ({ ...item, label: item.billNo, value: item.billID }))
             setBillNoOptions(arr);
          }
-
       } catch (error) {
          console.log(error)
       }
-
    }
 
    const handleDeleteTest = (indexToDelete: number) => {
       setTestDetails(prev => prev.filter((_, index) => index !== indexToDelete));
    };
 
-   const handleMainTabChange = (_: React.SyntheticEvent, newValue: number) => {
-      setMainTab(newValue);
+   const handleMainTabChange = (_: React.SyntheticEvent, newValue: number) => setMainTab(newValue);
+   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => setTab(newValue);
+
+   // --- ACTUAL DATABASE SUBMISSION LOGIC ---
+   const saveBillToDatabase = async (values: any, paymentId: string) => {
+      try {
+         // Appending Razorpay details into your payload
+         const payload = {
+            ...values,
+            payTypeDetail: "Razorpay", // Indicating mode of payment
+            payTypeNo: paymentId,      // Storing the Razorpay Transaction ID
+            typPatientBill: typPatientBill
+         };
+
+         const response = await api.post('AddPatientBill', payload);
+         if (response.data.isSuccess) {
+            toast.success("Bill Paid & Saved Successfully!");
+            // Optionally, refresh bill details here if needed
+         } else {
+            toast.error(response.data.msg);
+         }
+      } catch (error) {
+         console.log(error);
+         toast.error("Payment successful but failed to save in database.");
+      }
+   }
+
+   // --- RAZORPAY INTEGRATION LOGIC ---
+   const handleRazorpayPayment = async (values: any) => {
+      const res = await loadRazorpayScript();
+
+      if (!res) {
+         toast.error("Razorpay SDK failed to load. Are you online?");
+         return;
+      }
+
+      // Getting actual amount to pay from billSummary
+      const payAmount = billSummary[0]?.actualPayAmt || 0;
+      
+      if (payAmount <= 0) {
+         toast.warning("Payment amount must be greater than zero.");
+         return;
+      }
+
+      const options = {
+         key: "rzp_test_SYZuRxwlKGWymN", // Aapka Test API Key
+         amount: payAmount * 100, // Razorpay works in paise (amount * 100)
+         currency: "INR",
+         name: "Hospital Name", // Replace with actual hospital name
+         description: `Patient Bill Payment - Case No: ${Case}`,
+         handler: function (response: any) {
+            // Payment success hone par ye function chalega
+            const paymentId = response.razorpay_payment_id;
+            
+            // Payment successful hone ke baad DB me data save karein
+            saveBillToDatabase(values, paymentId);
+         },
+         prefill: {
+            name: patientInfo?.candName || "",
+            email: patientInfo?.email || "",
+            contact: patientInfo?.curMobileNo || ""
+         },
+         theme: {
+            color: "#1976d2"
+         }
+      };
+
+      const paymentObject = new window.Razorpay(options);
+      
+      // Payment Fail hone par handler
+      paymentObject.on('payment.failed', function (response: any) {
+         toast.error(`Payment Failed: ${response.error.description}`);
+      });
+
+      paymentObject.open();
    };
 
-   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
-      setTab(newValue);
-   };
-
-
+   // --- FORMIK ---
    const formik = useFormik({
       initialValues: {
-         "typPatientBill": [],
          "totDiscountAmt": 0,
          "billDate": defaultValues,
          "patientBillID": -1,
@@ -387,20 +363,10 @@ const PatientBilling = () => {
          "type": 1
       },
       onSubmit: async (values) => {
-         try {
-            const response = await api.post('AddPatientBill', { ...values, typPatientBill: typPatientBill });
-            if (response.data.isSuccess) {
-               toast.success(response.data.msg);
-            }
-            else {
-               toast.error(response.data.msg)
-            }
-
-         } catch (error) {
-            console.log(error);
-         }
+         // Direct DB me bhejne ke bajaye pehle Razorpay open karega
+         handleRazorpayPayment(values);
       }
-   })
+   });
 
    return (
       <Container maxWidth="lg" sx={{ py: 2 }}>
@@ -539,7 +505,7 @@ const PatientBilling = () => {
                                     <TableCell sx={{ fontWeight: "bold", color: "#fff" }}>Final Gross Amt</TableCell>
                                     <TableCell sx={{ fontWeight: "bold", color: "#fff" }}>Disc Amt</TableCell>
                                     <TableCell sx={{ fontWeight: "bold", color: "#fff" }}>Net Amt</TableCell>
-                                    <TableCell sx={{ fontWeight: "bold", color: "#fff" }}>Action</TableCell>
+                                    
                                  </TableRow>
                               </TableHead>
                               <TableBody>
@@ -552,16 +518,7 @@ const PatientBilling = () => {
                                           <TableCell>{test.finalGrossAmount}</TableCell>
                                           <TableCell>0.00</TableCell>
                                           <TableCell>{test.netAmount}</TableCell>
-                                          <TableCell>
-                                             <Button
-                                                variant="outlined"
-                                                color="error"
-                                                size="small"
-                                                onClick={() => handleDeleteTest(index)}
-                                             >
-                                                Delete
-                                             </Button>
-                                          </TableCell>
+                                         
                                        </TableRow>
                                     ))}
                               </TableBody>
@@ -630,11 +587,9 @@ const PatientBilling = () => {
                                  disablePortal
                                  fullWidth
                                  options={billNoOptions}
-                                 // value={Case}
                                  onChange={(e, newValue: any) => {
                                     if (!newValue) return;
                                     getBillReciept(newValue.patientCaseID, newValue.billID)
-
                                  }}
                                  renderInput={(params) => (
                                     <TextField {...params} label="Bill No" size="small" />
@@ -726,4 +681,3 @@ const Info = ({ label, value }: { label: string; value: any }) => (
 );
 
 export default PatientBilling;
-
