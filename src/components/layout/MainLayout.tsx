@@ -209,7 +209,7 @@ const MainLayout: React.FC = () => {
                             component="main" // Use semantic element
                             sx={{
                                 flexGrow: 1,
-                                px: { xs: 2, sm: 3, md: 5 }, // Responsive padding
+                                px: { xs: 0.5, sm: 1 }, // Responsive padding
                                 py: 3,
                                 // Adjust width calculation if sidebar width changes
                                 width: menuItems.length > 0 ? `calc(100% - ${sizeConfigs.sidebar.width})` : '100%',

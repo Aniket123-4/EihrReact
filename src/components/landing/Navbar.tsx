@@ -45,7 +45,7 @@ const Navbar = () => {
 
         {/* Action Buttons */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <ThemeSwitcher />
+          {/* <ThemeSwitcher /> */}
           <Link to="/login" style={{ textDecoration: 'none' }}>
             <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', fontWeight: 500, padding: '8px 16px' }}>Sign In</button>
           </Link>

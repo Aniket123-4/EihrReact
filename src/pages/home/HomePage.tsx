@@ -257,7 +257,7 @@ export default function HomePage() {
                             </Typography>
                         </Box>
                         <IconButton
-                            onClick={() => setSelectedModal(null)}
+                            //onClick={() => setSelectedModal(null)}
                             sx={{ color: theme.palette.primary.contrastText }}
                         >
                             <CloseIcon fontSize="medium" />
@@ -408,7 +408,7 @@ export default function HomePage() {
                                                     <Button
                                                         variant="outlined"
                                                         sx={{ mt: 2 }}
-                                                        onClick={() => setSelectedModal(null)}
+                                                      //  onClick={() => setSelectedModal(null)}
                                                     >
                                                         Close
                                                     </Button>
@@ -576,7 +576,7 @@ export default function HomePage() {
                         }
                     ].map((status: any, index) => (
                         <Grid item xs={12} sm={6} md={3} key={index}
-                            onClick={() => handleStatusCardClick(status.type)}
+                            //onClick={() => handleStatusCardClick(status.type)}
                             sx={{ cursor: 'pointer' }}
                         >
                             <Card

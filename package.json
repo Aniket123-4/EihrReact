@@ -75,6 +75,7 @@
     "react-redux": "^8.1.1",
     "react-router-dom": "^6.14.2",
     "react-scripts": "^5.0.1",
+    "react-speech-recognition": "^4.0.1",
     "react-sweetalert2": "^0.5.2",
     "react-toastify": "^10.0.4",
     "react-transliterate": "^1.1.9",

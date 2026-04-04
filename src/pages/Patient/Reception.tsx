@@ -734,7 +734,7 @@ export default function Reception() {
                         // const IconComponent = status.iconName; // Corrected this line
                         return (
                             <Grid item xs={12} sm={6} md={3} key={status.type}
-                                onClick={() => handleStatusCardClick(status.type)}
+                                //onClick={() => handleStatusCardClick(status.type)}
                                 sx={{ cursor: 'pointer' }}
                             >
                                 <Card
