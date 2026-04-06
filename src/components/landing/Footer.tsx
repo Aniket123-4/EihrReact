@@ -10,7 +10,8 @@ const Footer = () => {
               <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#38bdf8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Activity color="white" size={16} />
               </div>
-              <span style={{ fontWeight: 'bold', fontSize: '20px' }}>MediFlow</span>
+              <span style={{ fontWeight: 'bold', fontSize: '20px' }}>Vaidhyaraj Madan Mohan Singh Portal
+</span>
             </div>
             <p style={{ color: '#64748b', lineHeight: 1.6 }}>Next-generation hospital management for modern healthcare facilities.</p>
           </div>
@@ -31,7 +32,8 @@ const Footer = () => {
           </div>
         </div>
         <div style={{ textAlign: 'center', color: '#94a3b8', fontSize: '13px', paddingTop: '40px', borderTop: '1px solid #f1f5f9' }}>
-          © 2026 MediFlow. All rights reserved.
+          © 2026 Vaidhyaraj Madan Mohan Singh Portal
+. All rights reserved.
         </div>
       </div>
     </footer>

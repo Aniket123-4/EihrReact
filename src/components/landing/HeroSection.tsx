@@ -34,11 +34,11 @@ const HeroSection = () => {
 
         <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
           <button onClick={() => {navigate('/login') }} style={{ background: '#38bdf8', color: 'white', border: 'none', padding: '16px 32px', borderRadius: '12px', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            Get Started <ArrowRight size={18} />
+          Book Appointment <ArrowRight size={18} />
           </button>
-          <button style={{ background: 'white', color: '#0f172a', border: '1px solid #e2e8f0', padding: '16px 32px', borderRadius: '12px', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer' }}>
+          {/* <button style={{ background: 'white', color: '#0f172a', border: '1px solid #e2e8f0', padding: '16px 32px', borderRadius: '12px', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer' }}>
             Book Appointment
-          </button>
+          </button> */}
         </div>
 
         {/* Floating Cards */}

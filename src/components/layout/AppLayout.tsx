@@ -37,7 +37,8 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
           </div>
           {!collapsed && (
             <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="font-display font-bold glow-text text-lg">
-              MediFlow
+              Vaidhyaraj Madan Mohan Singh Portal
+
             </motion.span>
           )}
         </div>
