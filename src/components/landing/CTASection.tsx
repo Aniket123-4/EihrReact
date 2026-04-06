@@ -62,7 +62,8 @@ const CTASection = () => {
             margin: '0 auto 40px',
             lineHeight: 1.6
           }}>
-            Join hundreds of hospitals already using MediFlow to deliver better patient care and streamline operations.
+            Join hundreds of hospitals already using Vaidhyaraj Madan Mohan Singh Portal
+ to deliver better patient care and streamline operations.
           </p>
 
           <Link to="/login" style={{ textDecoration: 'none' }}>

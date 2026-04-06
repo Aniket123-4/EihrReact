@@ -1,3 +1,4 @@
+
 import React, { ReactNode, useEffect, useState } from "react";
 import {
     Box,
@@ -21,15 +22,23 @@ import {
     TableRow,
     TableCell,
     TableBody,
-    TableFooter, // Added for Pagination
-    TablePagination, // Added for Pagination
-    Tooltip, // Added for icons
+    TableFooter,
+    TablePagination,
+    Tooltip,
     CircularProgress,
     Badge,
-    Slide,
     Skeleton,
     Chip,
-    Avatar, // Added for loading state
+    Avatar,
+    Container,
+    CardContent,
+    CardHeader,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    IconButton as MuiIconButton,
+    Alert,
+    Snackbar,
 } from "@mui/material";
 
 import ExpandLess from '@mui/icons-material/ExpandLess';
@@ -37,29 +46,32 @@ import ExpandMore from '@mui/icons-material/ExpandMore';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import StarIcon from '@mui/icons-material/Star';
-import PersonAddAltIcon from '@mui/icons-material/PersonAddAlt'; // Icon for Registration
-import FiberNewIcon from '@mui/icons-material/FiberNew'; // Icon for New
-import RepeatIcon from '@mui/icons-material/Repeat'; // Icon for Revisit
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'; // Icon for Checkout
-import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos'; // Icon for navigation
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday'; // Icon for Date
-import TodayIcon from '@mui/icons-material/Today'; // Icon for Current Date
-import PeopleIcon from '@mui/icons-material/People'; // Icon for Total Patients
-import SearchIcon from '@mui/icons-material/Search'; // Icon for Apply Filters
-import ClearAllIcon from '@mui/icons-material/ClearAll'; // Icon for Clear Filters
+import PersonAddAltIcon from '@mui/icons-material/PersonAddAlt';
+import FiberNewIcon from '@mui/icons-material/FiberNew';
+import RepeatIcon from '@mui/icons-material/Repeat';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import TodayIcon from '@mui/icons-material/Today';
+import PeopleIcon from '@mui/icons-material/People';
+import SearchIcon from '@mui/icons-material/Search';
+import ClearAllIcon from '@mui/icons-material/ClearAll';
+import CloseIcon from '@mui/icons-material/Close';
+import DownloadOutlined from '@mui/icons-material/DownloadOutlined';
+import PrintOutlined from '@mui/icons-material/PrintOutlined';
+
+import { PhoneIcon, TagIcon } from "lucide-react";
+import { PieChart } from "@mui/x-charts/PieChart";
 import api from "../../utils/Url";
 import { getISTDate } from "../../utils/Constant";
 import { useFormik } from "formik";
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import CloseIcon from '@mui/icons-material/Close';
-import { PhoneIcon, TagIcon } from "lucide-react";
+
+// ==================== TYPES ====================
 interface SelectOption {
     label: string;
     value: string | number;
 }
-// Interface for Patient Data (adjust based on actual API response)
+
 interface PatientData {
     bloodGroup: string | null;
     patientID: number;
@@ -70,36 +82,122 @@ interface PatientData {
     email: string | null;
 }
 
+interface Appointment {
+    doctorName: string;
+    patientNo: string;
+    slotDateVar: string;
+    slotTimeVar: string;
+    weekName: string;
+    isExpired: boolean;
+}
+
+interface PatientVisit {
+    doctorName: string;
+    patientCaseNo: string;
+    admNo: string;
+    actualVisitDateVar: string;
+    vPreEmpTypeName: string;
+    isConsultencyPaid: boolean;
+}
+
+// ==================== MAIN COMPONENT ====================
 export default function HomePage() {
+    const theme = useTheme();
+    const { defaultValuestime } = getISTDate();
+    
+    // ========== Common State (ALWAYS at top level) ==========
+    const [verifiedUser, setVerifiedUser] = useState<any>(null);
+    const [isAuthenticating, setIsAuthenticating] = useState(true);
+    const [userType, setUserType] = useState<string | null>(null);
+    const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" as "success" | "error" });
+
+    // ========== Admin Dashboard State (ALWAYS at top level) ==========
     type StatusModalType = 'registration' | 'new' | 'revisit' | 'checkout';
     const [selectedModal, setSelectedModal] = useState<StatusModalType | null>(null);
     const [modalPatients, setModalPatients] = useState<PatientData[]>([]);
     const [isModalLoading, setIsModalLoading] = useState(false);
-
-
-    const theme = useTheme();
-    const { defaultValuestime } = getISTDate();
-
-    const [patientList, setPatientList] = useState<PatientData[]>([]); // Use specific interface
-    const [isLoading, setIsLoading] = useState(false); // Loading state for API calls
-    const [isFetchingStatus, setIsFetchingStatus] = useState(false); // Loading state for status cards
+    const [patientList, setPatientList] = useState<PatientData[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [isFetchingStatus, setIsFetchingStatus] = useState(false);
     const [selectedVisitType, setSelectedVisitType] = useState('newVisit');
-    const [openFilter, setOpenFilter] = useState(false); // Default to open for initial view?
+    const [openFilter, setOpenFilter] = useState(false);
     const [statusCounts, setStatusCounts] = useState({
         registration: { count: 0, typeId: 1 },
         new: { count: 0, typeId: 3 },
         revisit: { count: 0, typeId: 4 },
         checkout: { count: 0, typeId: 2 },
     });
-    const handleStatusCardClick = async (type: StatusModalType) => {
-        setSelectedModal(type);
-        fetchPatients(type);
+    const [adminPage, setAdminPage] = useState(0);
+    const [adminRowsPerPage, setAdminRowsPerPage] = useState(10);
+
+    // ========== Candidate Dashboard State (ALWAYS at top level) ==========
+    const [selectedRows, setSelectedRows] = useState<any>({});
+    const [appointmentHistory, setAppointmentHistory] = useState<Appointment[]>([]);
+    const [patientVisits, setPatientVisits] = useState<PatientVisit[]>([]);
+    const [analysis, setAnalysis] = useState<any[]>([]);
+    const [candidateLoading, setCandidateLoading] = useState(false);
+    const [printDataRecord, setPrintDataRecord] = useState<any>(null);
+    const [showPdf, setShowPdf] = useState(false);
+    const [base64Data, setBase64Data] = useState<string>("");
+    const [candidatePage, setCandidatePage] = useState(0);
+    const [candidateRowsPerPage, setCandidateRowsPerPage] = useState(5);
+
+    // ========== Formik for Admin (ALWAYS at top level) ==========
+    const formik = useFormik({
+        initialValues: {
+            fromDate: defaultValuestime.slice(0, 10),
+            toDate: defaultValuestime.slice(0, 10),
+            caseNo: "",
+            peteintNo: "",
+            name: "",
+            UId: "",
+            fileNO: "",
+            mobNo: "",
+            phnNo: "",
+            CaseTypeId: 0,
+            specilizationID: 0,
+            doctorID: "all",
+            type: 1,
+        },
+        onSubmit: async () => searchPatients(),
+    });
+
+    // ========== Helper Functions ==========
+    const showMessage = (message: string, severity: "success" | "error") => {
+        setSnackbar({ open: true, message, severity });
     };
-    useEffect(() => {
-        getStatus();
 
-    }, []);
+    const getUserFromMultipleSources = () => {
+        const verifiedUserStr = localStorage.getItem("verifiedUser");
+        if (verifiedUserStr) {
+            try {
+                const parsed = JSON.parse(verifiedUserStr);
+                if (parsed?.userID) {
+                    console.log("✅ User found in 'verifiedUser' key");
+                    return parsed;
+                }
+            } catch(e) {}
+        }
+        
+        const userStr = localStorage.getItem("user");
+        if (userStr) {
+            try {
+                const parsed = JSON.parse(userStr);
+                if (parsed?.verifiedUser?.userID) {
+                    console.log("✅ User found in 'user' key");
+                    return parsed.verifiedUser;
+                }
+                if (parsed?.userID) {
+                    console.log("✅ User found in 'user' key (direct)");
+                    return parsed;
+                }
+            } catch(e) {}
+        }
+        
+        return null;
+    };
 
+    // ========== Admin Dashboard APIs ==========
     const getStatus = async () => {
         setIsFetchingStatus(true);
         try {
@@ -130,10 +228,8 @@ export default function HomePage() {
         setIsModalLoading(true);
         try {
             const typeId = statusCounts[type].typeId;
-
             const collectData = {
                 type: typeId,
-                // type: 1,
                 fromToDate: [defaultValuestime.slice(0, 10), defaultValuestime.slice(0, 10)],
                 patientCaseNo: "",
                 patientNo: "",
@@ -152,7 +248,6 @@ export default function HomePage() {
                 patientCaseID: "-1",
                 formID: -1,
             };
-
             const res = await api.post(`GetPatientSearchOPIP`, collectData);
             setModalPatients(res?.data?.result || []);
         } catch (error) {
@@ -162,289 +257,9 @@ export default function HomePage() {
         }
     };
 
-    // --- Pagination State ---
-    const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(10); // Default rows per page
-    const handleVisitTypeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setSelectedVisitType((event.target as HTMLInputElement).value);
-        if (event.target.value === "followUpVisit") {
-            formik.setFieldValue('type', 2)
-        } else if (event.target.value === "visitStatusUpdate") {
-            formik.setFieldValue('type', 3)
-        } else {
-            formik.setFieldValue('type', 1)
-        }
-    };
-    const handleToggleFilter = () => {
-        setOpenFilter(!openFilter);
-    };
-
-    interface StatusModalProps {
-        // Add any props that the StatusModal component should accept
-    }
-
-    const StatusModal = React.forwardRef<HTMLDivElement, StatusModalProps>((props, ref) => {
-        const getModalConfig = (type: StatusModalType) => {
-            switch (type) {
-                case 'registration':
-                    return {
-                        title: 'Registration Patients',
-                        icon: <PersonAddAltIcon sx={{ mr: 1.5, fontSize: 28 }} />,
-                        color: theme.palette.primary.main
-                    };
-                case 'new':
-                    return {
-                        title: 'New Visit Patients',
-                        icon: <FiberNewIcon sx={{ mr: 1.5, fontSize: 28 }} />,
-                        color: theme.palette.success.main
-                    };
-                case 'revisit':
-                    return {
-                        title: 'Revisit Patients',
-                        icon: <RepeatIcon sx={{ mr: 1.5, fontSize: 28 }} />,
-                        color: theme.palette.warning.main
-                    };
-                case 'checkout':
-                    return {
-                        title: 'Checkout Patients',
-                        icon: <CheckCircleOutlineIcon sx={{ mr: 1.5, fontSize: 28 }} />,
-                        color: theme.palette.info.main
-                    };
-                default:
-                    return { title: '', icon: null, color: '' };
-            }
-        };
-
-        const { title, icon, color } = getModalConfig(selectedModal!);
-
-        return (
-            <div ref={ref}>
-                <Dialog
-                    open={!!selectedModal}
-                    onClose={() => setSelectedModal(null)}
-                    fullWidth
-                    maxWidth="md"
-                    scroll="paper"
-                    // TransitionComponent={(props) => <Slide {...props} direction="up" />}
-                    sx={{
-                        '& .MuiDialog-paper': {
-                            borderRadius: 4,
-                            boxShadow: 24,
-                            background: 'linear-gradient(145deg, #f5f7fa 0%, #c3cfe2 100%)',
-                            margin: 6,
-                            width: 'calc(100% - 32px)',
-                        },
-                    }}
-                >
-
-                    <DialogTitle
-                        sx={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            background: theme.palette.primary.main,
-                            color: theme.palette.primary.contrastText,
-                            py: 2,
-                            px: 3,
-                            borderTopLeftRadius: 8,
-                            borderTopRightRadius: 8,
-                        }}
-                    >
-                        <Box display="flex" alignItems="center">
-                            {icon}
-                            <Typography variant="h6" fontWeight="600">
-                                {title}
-                            </Typography>
-                        </Box>
-                        <IconButton
-                            //onClick={() => setSelectedModal(null)}
-                            sx={{ color: theme.palette.primary.contrastText }}
-                        >
-                            <CloseIcon fontSize="medium" />
-                        </IconButton>
-                    </DialogTitle>
-
-                    <DialogContent dividers sx={{ p: 0 }}>
-                        <Box sx={{
-                            p: 2,
-                            bgcolor: 'background.paper',
-                            borderBottom: `1px solid ${theme.palette.divider}`,
-                            display: 'flex',
-                            gap: 3,
-                            flexWrap: 'wrap'
-                        }}>
-                            <StatBadge
-                                icon={<PeopleIcon color="info" />}
-                                value={modalPatients.length}
-                                label="Total Patients"
-                            />
-                            <StatBadge
-                                icon={<TodayIcon color="success" />}
-                                value={new Date().toLocaleDateString()}
-                                label="Current Date"
-                            />
-                            <StatBadge
-                                icon={<FilterListIcon color="warning" />}
-                                value="Active"
-                                label="Status"
-                            />
-                        </Box>
-                        <TableContainer
-                            component={Paper}
-                            sx={{
-                                maxHeight: '70vh',
-                                border: 'none',
-                                '&::-webkit-scrollbar': { width: '8px' },
-                                '&::-webkit-scrollbar-thumb': {
-                                    backgroundColor: theme.palette.primary.light,
-                                    borderRadius: 4
-                                }
-                            }}
-                        >
-                            <Table stickyHeader size="small" sx={{ minWidth: 800 }}>
-                                <TableHead>
-                                    <TableRow sx={{
-                                        '& th': {
-                                            backgroundColor: theme.palette.primary.light,
-                                            color: theme.palette.primary.contrastText,
-                                            fontWeight: 600,
-                                            fontSize: '0.95rem'
-                                        }
-                                    }}>
-                                        <TableCell sx={{ width: '15%' }}>Patient NO.</TableCell>
-                                        <TableCell sx={{ width: '30%' }}>Patient Details</TableCell>
-                                        <TableCell sx={{ width: '20%' }}>Contact</TableCell>
-                                        <TableCell sx={{ width: '20%' }}>Date of Birth</TableCell>
-                                        <TableCell sx={{ width: '15%' }}>Blood Group</TableCell>
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    {isModalLoading ? (
-                                        Array(5).fill(0).map((_, index) => (
-                                            <TableRow key={index}>
-                                                <TableCell colSpan={5}>
-                                                    <Skeleton variant="text" height={40} />
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
-                                    ) : modalPatients.length > 0 ? (
-                                        modalPatients.map(patient => (
-                                            <TableRow
-                                                key={patient.patientID}
-                                                hover
-                                                sx={{
-                                                    '&:hover': { backgroundColor: 'action.hover' },
-                                                    '&:last-child td': { borderBottom: 0 }
-                                                }}
-                                            >
-                                                <TableCell>
-                                                    <Box display="flex" alignItems="center">
-                                                        <TagIcon fontSize="small" color="action" style={{ marginRight: 8 }} />
-                                                        <Typography variant="body2" fontWeight={500}>
-                                                            {patient.patientNo}
-                                                        </Typography>
-                                                    </Box>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Box display="flex" alignItems="center">
-                                                        <Avatar sx={{
-                                                            width: 32,
-                                                            height: 32,
-                                                            mr: 2,
-                                                            bgcolor: theme.palette.secondary.main
-                                                        }}>
-                                                            {patient.candName.charAt(0)}
-                                                        </Avatar>
-                                                        <div>
-                                                            <Typography fontWeight={500}>{patient.candName}</Typography>
-                                                            <Typography variant="body2" color="text.secondary">
-                                                                {patient.email || 'No email'}
-                                                            </Typography>
-                                                        </div>
-                                                    </Box>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Box display="flex" alignItems="center">
-                                                        <PhoneIcon style={{ fontSize: '16px', color: 'rgba(0, 0, 0, 0.54)', marginRight: '8px' }} />
-                                                        {patient.curMobileNo || '-'}
-                                                    </Box>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Chip
-                                                        label={patient.dob ? new Date(patient.dob).toLocaleDateString() : 'N/A'}
-                                                        size="small"
-                                                        icon={<CalendarTodayIcon fontSize="small" />}
-                                                    />
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Box display="flex" alignItems="center">
-                                                        {patient.bloodGroup || '-'}
-                                                    </Box>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
-                                    ) : (
-                                        <TableRow>
-                                            <TableCell colSpan={5} sx={{ py: 4 }}>
-                                                <Box
-                                                    textAlign="center"
-                                                    sx={{
-                                                        maxWidth: 400,
-                                                        mx: 'auto',
-                                                        color: 'text.secondary'
-                                                    }}
-                                                >
-                                                    <img
-                                                        src="/empty-state.svg"
-                                                        alt="No patients"
-                                                        style={{ height: 120, marginBottom: 2 }}
-                                                    />
-                                                    <Typography variant="h6" gutterBottom>
-                                                        No Patients Found
-                                                    </Typography>
-                                                    <Typography variant="body2">
-                                                        Try adjusting your filters or check back later
-                                                    </Typography>
-                                                    <Button
-                                                        variant="outlined"
-                                                        sx={{ mt: 2 }}
-                                                      //  onClick={() => setSelectedModal(null)}
-                                                    >
-                                                        Close
-                                                    </Button>
-                                                </Box>
-                                            </TableCell>
-                                        </TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
-                        <Box sx={{
-                            p: 2,
-                            bgcolor: 'background.paper',
-                            borderTop: `1px solid ${theme.palette.divider}`,
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center'
-                        }}>
-                            <Typography variant="body2" color="text.secondary">
-                                Showing {modalPatients.length} of {modalPatients.length} results
-                            </Typography>
-                        </Box>
-                    </DialogContent>
-
-                </Dialog>
-            </div>
-        );
-    });
-
-
-
     const searchPatients = async (resetPage = true) => {
         setIsLoading(true);
-        if (resetPage) {
-            setPage(0);
-        }
+        if (resetPage) setAdminPage(0);
         try {
             const collectData = {
                 fromToDate: [formik.values.fromDate, formik.values.toDate],
@@ -467,8 +282,7 @@ export default function HomePage() {
                 type: formik.values.type,
             };
             const res = await api.post(`GetPatientSearchOPIP`, collectData);
-            const data: PatientData[] = res?.data?.result || []; // Type assertion
-            setPatientList(data);
+            setPatientList(res?.data?.result || []);
         } catch (error) {
             console.error("Error searching patients:", error);
             setPatientList([]);
@@ -476,44 +290,189 @@ export default function HomePage() {
             setIsLoading(false);
         }
     };
-    const formik = useFormik({
-        initialValues: {
-            fromDate: defaultValuestime.slice(0, 10),
-            toDate: defaultValuestime.slice(0, 10),
-            caseNo: "",
-            peteintNo: "",
-            name: "",
-            UId: "",
-            fileNO: "",
-            mobNo: "",
-            phnNo: "",
-            CaseTypeId: 0,
-            specilizationID: 0,
-            doctorID: "all",
-            type: 1,
-        },
-        onSubmit: async (values) => {
-            searchPatients();
-        },
-    });
+
+    // ========== Candidate Dashboard APIs ==========
+    const getOnlinePatient = async (type: number = 1) => {
+        if (!verifiedUser?.userID) return;
+        setCandidateLoading(true);
+        try {
+            const params = {
+                onlinePatientID: verifiedUser.userID,
+                userID: -1,
+                formID: -1,
+                type: type
+            };
+            const res = await api.post(`Online/GetOnlinePatient`, params);
+            
+            if (type === 1) {
+                setSelectedRows(res?.data?.result?.[0] || {});
+            } else if (type === 2) {
+                setAppointmentHistory(res?.data?.result || []);
+                setPatientVisits(res?.data?.result1 || []);
+                if (res?.data?.result2 && Array.isArray(res.data.result2)) {
+                    const chartData = res.data.result2.map((item: any, index: number) => ({
+                        id: index,
+                        value: item.visitCount || 0,
+                        label: item.yearData || `Year ${index + 1}`,
+                    }));
+                    setAnalysis(chartData);
+                }
+            }
+        } catch (error) {
+            console.error(error);
+            showMessage("Failed to load data", "error");
+        } finally {
+            setCandidateLoading(false);
+        }
+    };
+
+    const handlePrint = (record: Appointment) => {
+        setPrintDataRecord(record);
+        setTimeout(() => {
+            const printContents = document.getElementById("printData")?.innerHTML;
+            if (printContents && printContents.trim() !== "") {
+                const printWindow = window.open('', '_blank');
+                if (printWindow) {
+                    printWindow.document.write(`
+                        <html>
+                            <head>
+                                <title>Print Appointment</title>
+                                <style>
+                                    body { font-family: Arial, sans-serif; padding: 20px; }
+                                    @media print { body { margin: 0; padding: 20px; } }
+                                </style>
+                            </head>
+                            <body>${printContents}</body>
+                        </html>
+                    `);
+                    printWindow.document.close();
+                    printWindow.print();
+                    printWindow.close();
+                }
+            }
+            setPrintDataRecord(null);
+        }, 100);
+    };
+
+    const handlePrintReport = async () => {
+        if (!verifiedUser?.userID) return;
+        setCandidateLoading(true);
+        try {
+            const params = {
+                onlinePatientID: verifiedUser.userID,
+                userID: -1,
+                formID: -1,
+                type: 2,
+                show: false,
+                exportOption: ".pdf"
+            };
+            const res = await api.post(`Reports/OnlinePatientAppoinmentReceipt`, params);
+            if (res?.data) {
+                setBase64Data(res.data);
+                setShowPdf(true);
+            }
+        } catch (error) {
+            showMessage("Failed to generate report", "error");
+        } finally {
+            setCandidateLoading(false);
+        }
+    };
+
+    const handleStatusCardClick = async (type: StatusModalType) => {
+        setSelectedModal(type);
+        fetchPatients(type);
+    };
+
+    const handleVisitTypeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setSelectedVisitType(event.target.value);
+        if (event.target.value === "followUpVisit") formik.setFieldValue('type', 2);
+        else if (event.target.value === "visitStatusUpdate") formik.setFieldValue('type', 3);
+        else formik.setFieldValue('type', 1);
+    };
+
     const handleClearFilters = () => {
         formik.resetForm();
         setPatientList([]);
-        setPage(0);
+        setAdminPage(0);
     };
 
-    const handleChangePage = (event: unknown, newPage: number) => {
-        setPage(newPage);
+    const handleChangeAdminPage = (event: unknown, newPage: number) => setAdminPage(newPage);
+    const handleChangeAdminRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setAdminRowsPerPage(parseInt(event.target.value, 10));
+        setAdminPage(0);
     };
 
-    const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setRowsPerPage(parseInt(event.target.value, 10));
-        setPage(0); // Go back to the first page
+    const handleChangeCandidatePage = (event: unknown, newPage: number) => setCandidatePage(newPage);
+    const handleChangeCandidateRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setCandidateRowsPerPage(parseInt(event.target.value, 10));
+        setCandidatePage(0);
     };
 
-    const displayedPatients = patientList.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
-    // Calculate empty rows to avoid layout jumps
-    const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - patientList.length) : 0;
+    // ========== Pagination Calculations ==========
+    const displayedPatients = patientList.slice(adminPage * adminRowsPerPage, adminPage * adminRowsPerPage + adminRowsPerPage);
+    const displayedAppointments = appointmentHistory.slice(candidatePage * candidateRowsPerPage, candidatePage * candidateRowsPerPage + candidateRowsPerPage);
+    const emptyRows = candidatePage > 0 ? Math.max(0, (1 + candidatePage) * candidateRowsPerPage - appointmentHistory.length) : 0;
+
+    const pieChartData = analysis.length > 0 ? analysis : [
+        { id: 0, value: 33, label: "Visits" },
+        { id: 1, value: 26, label: "Appointments" },
+        { id: 2, value: 22, label: "Year" },
+    ];
+
+    // ========== Status Modal Component (defined inside, but it's a function, not a hook) ==========
+    const renderStatusModal = () => {
+        const getModalConfig = (type: StatusModalType) => {
+            switch (type) {
+                case 'registration':
+                    return { title: 'Registration Patients', icon: <PersonAddAltIcon sx={{ mr: 1.5, fontSize: 28 }} /> };
+                case 'new':
+                    return { title: 'New Visit Patients', icon: <FiberNewIcon sx={{ mr: 1.5, fontSize: 28 }} /> };
+                case 'revisit':
+                    return { title: 'Revisit Patients', icon: <RepeatIcon sx={{ mr: 1.5, fontSize: 28 }} /> };
+                case 'checkout':
+                    return { title: 'Checkout Patients', icon: <CheckCircleOutlineIcon sx={{ mr: 1.5, fontSize: 28 }} /> };
+                default:
+                    return { title: '', icon: null };
+            }
+        };
+
+        const { title, icon } = getModalConfig(selectedModal!);
+
+        return (
+            <Dialog open={!!selectedModal} onClose={() => setSelectedModal(null)} fullWidth maxWidth="md" scroll="paper">
+                <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: theme.palette.primary.main, color: 'white' }}>
+                    <Box display="flex" alignItems="center">{icon}<Typography variant="h6">{title}</Typography></Box>
+                    {/* <IconButton 
+                    
+                    onClick={() => setSelectedModal(null)} sx={{ color: 'white' }}><CloseIcon /></IconButton> */}
+                </DialogTitle>
+                <DialogContent dividers>
+                    <TableContainer component={Paper}>
+                        <Table stickyHeader size="small">
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell>Patient NO.</TableCell><TableCell>Patient Details</TableCell><TableCell>Contact</TableCell><TableCell>Date of Birth</TableCell><TableCell>Blood Group</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {isModalLoading ? (
+                                    Array(5).fill(0).map((_, i) => (<TableRow key={i}><TableCell colSpan={5}><Skeleton height={40} /></TableCell></TableRow>))
+                                ) : modalPatients.map(patient => (
+                                    <TableRow key={patient.patientID} hover>
+                                        <TableCell><TagIcon size={16} style={{ marginRight: 8 }} />{patient.patientNo}</TableCell>
+                                        <TableCell><Avatar sx={{ width: 32, height: 32, mr: 2 }}>{patient.candName.charAt(0)}</Avatar>{patient.candName}</TableCell>
+                                        <TableCell><PhoneIcon size={16} style={{ marginRight: 8 }} />{patient.curMobileNo || '-'}</TableCell>
+                                        <TableCell><Chip label={patient.dob ? new Date(patient.dob).toLocaleDateString() : 'N/A'} size="small" icon={<CalendarTodayIcon />} /></TableCell>
+                                        <TableCell>{patient.bloodGroup || '-'}</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                </DialogContent>
+            </Dialog>
+        );
+    };
 
     const StatBadge = ({ icon, value, label }: { icon: ReactNode; value: string | number; label: string }) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -525,406 +484,307 @@ export default function HomePage() {
         </Box>
     );
 
-    return (
-        <Box sx={{ width: "100%", mt: 2 }}> {/* Reduced top margin slightly */}
-            <StatusModal />
-            <Paper elevation={3} sx={{ width: "100%", overflow: "hidden", p: { xs: 1.5, md: 3 } }}>
-                <Grid container spacing={3} sx={{ mb: 4, px: 2 }}>
-                    {[
-                        {
-                            type: 'registration' as StatusModalType,
-                            label: "Registration",
-                            value: statusCounts.registration.count,
-                            typeId: 1,
-                            icon: <PersonAddAltIcon fontSize="medium" />,
-                            color: theme.palette.primary.main,
-                            gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                            loading: isFetchingStatus
-                        },
-                        {
-                            type: 'new' as StatusModalType,
-                            label: "New Visit",
-                            value: statusCounts.new.count,
-                            typeId: 3,
-                            // value: statusCounts.new,
-                            icon: <FiberNewIcon fontSize="medium" />,
-                            color: theme.palette.success.main,
-                            gradient: 'linear-gradient(135deg, #48bb78 0%, #38a169 100%)',
-                            loading: isFetchingStatus
-                        },
-                        {
-                            type: 'revisit' as StatusModalType,
-                            label: "Revisit",
-                            value: statusCounts.revisit.count,
-                            typeId: 4,
-                            //value: statusCounts.revisit,
-                            icon: <RepeatIcon fontSize="medium" />,
-                            color: theme.palette.warning.main,
-                            gradient: 'linear-gradient(135deg, #ed8936 0%, #dd6b20 100%)',
-                            loading: isFetchingStatus
-                        },
-                        {
-                            type: 'checkout' as StatusModalType,
-                            label: "Checkout",
-                            value: statusCounts.checkout.count,
-                            typeId: 3,
-                            //  value: statusCounts.checkout,
-                            icon: <CheckCircleOutlineIcon fontSize="medium" />,
-                            color: theme.palette.info.main,
-                            gradient: 'linear-gradient(135deg, #4299e1 0%, #3182ce 100%)',
-                            loading: isFetchingStatus
-                        }
-                    ].map((status: any, index) => (
-                        <Grid item xs={12} sm={6} md={3} key={index}
-                            //onClick={() => handleStatusCardClick(status.type)}
-                            sx={{ cursor: 'pointer' }}
-                        >
-                            <Card
-                                elevation={4}
-                                sx={{
-                                    p: 1,
-                                    position: 'relative',
-                                    overflow: 'visible',
-                                    cursor: index === 0 ? 'pointer' : 'default',
-                                    background: status.gradient,
-                                    color: 'white',
-                                    //  transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-                                    '&:hover': {
-                                        transform: 'translateY(-4px)',
-                                        boxShadow: theme.shadows[6],
-                                        ...(index === 0 && {
-                                            '& .hover-arrow': {
-                                                opacity: 1,
-                                                right: -10
-                                            }
-                                        })
-                                    },
-                                    '&::before': {
-                                        content: '""',
-                                        position: 'absolute',
-                                        top: -16,
-                                        right: -16,
-                                        width: 48,
-                                        height: 48,
-                                        background: 'rgba(255,255,255,0.15)',
-                                        borderRadius: '50%',
-                                        backdropFilter: 'blur(4px)'
-                                    }
-                                }}
-                            >
-                                <Box sx={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between'
-                                }}>
-                                    <Box sx={{
-                                        p: 1.5,
-                                        background: 'rgba(255,255,255,0.15)',
-                                        borderRadius: '12px',
-                                        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'
-                                    }}>
-                                        {React.cloneElement(status.icon, {
-                                            sx: {
-                                                fontSize: 28,
-                                                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
-                                            }
-                                        })}
-                                    </Box>
+    // ========== ALL useEffects at TOP LEVEL (NOT inside conditions) ==========
+    // Effect 1: Load user from storage
+    useEffect(() => {
+        const user = getUserFromMultipleSources();
+        console.log("Final extracted user:", user);
+        
+        if (user) {
+            setVerifiedUser(user);
+            const typeId = user.userTypeID?.toString() || user.userType?.toString();
+            console.log("User Type ID:", typeId);
+            setUserType(typeId);
+        }
+        setIsAuthenticating(false);
+    }, []);
 
-                                    {index === 0 && (
-                                        <Box className="hover-arrow" sx={{
-                                            position: 'absolute',
-                                            right: 0,
-                                            opacity: 0,
-                                            //   transition: 'all 0.3s ease',
-                                            color: 'white'
-                                        }}>
-                                            <ArrowForwardIosIcon fontSize="small" />
-                                        </Box>
-                                    )}
-                                </Box>
+    // Effect 2: Load admin data if user is admin
+    useEffect(() => {
+        if (verifiedUser && userType && userType !== '11') {
+            getStatus();
+        }
+    }, [verifiedUser, userType]);
 
-                                <Box sx={{ mt: 2 }}>
-                                    <Typography variant="subtitle2" sx={{
-                                        fontWeight: 600,
-                                        letterSpacing: '0.5px',
-                                        opacity: 0.9,
-                                        mb: 0.5
-                                    }}>
-                                        {status.label}
-                                    </Typography>
+    // Effect 3: Load candidate data if user is candidate
+    useEffect(() => {
+        if (verifiedUser?.userID && userType === '11') {
+            getOnlinePatient(1);
+            getOnlinePatient(2);
+        }
+    }, [verifiedUser?.userID, userType]);
 
-                                    {status.loading ? (
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                                            <CircularProgress
-                                                size={28}
-                                                thickness={4}
-                                                sx={{ color: 'rgba(255,255,255,0.8)' }}
-                                            />
-                                            <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                                                Loading...
-                                            </Typography>
-                                        </Box>
-                                    ) : (
-                                        <Typography variant="h4" sx={{
-                                            fontWeight: 700,
-                                            letterSpacing: '-0.5px',
-                                            lineHeight: 1.2,
-                                            textShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                                        }}>
-                                            {status.value}
-                                            <Typography component="span" variant="body2" sx={{
-                                                ml: 1,
-                                                opacity: 0.8,
-                                                verticalAlign: 'middle'
-                                            }}>
-                                                Patients
-                                            </Typography>
-                                        </Typography>
-                                    )}
-                                </Box>
-
-                                <Box sx={{
-                                    position: 'absolute',
-                                    bottom: -16,
-                                    right: 16,
-                                    width: 32,
-                                    height: 32,
-                                    background: 'rgba(255,255,255,0.2)',
-                                    borderRadius: '8px',
-                                    transform: 'rotate(45deg)'
-                                }} />
-                            </Card>
-                        </Grid>
-                    ))}
-                </Grid>
-                {/* --- Filters Section Toggle --- */}
-                <Box sx={{ mb: 2 }}>
-                    <Button
-                        onClick={handleToggleFilter}
-                        variant="contained" // Changed to contained for more emphasis
-                        color="secondary"
-                        fullWidth
-                        sx={{
-                            justifyContent: 'space-between',
-                            py: 1,
-                            px: 2,
-                            textTransform: 'none', // Prevent uppercase text
-                            fontSize: '1rem',
-                            backgroundColor: theme.palette.mode === 'dark' ? 'grey.700' : 'grey.200', // Subtle background
-                            color: theme.palette.text.primary, // Use primary text color
-                            '&:hover': {
-                                backgroundColor: theme.palette.mode === 'dark' ? 'grey.600' : 'grey.300',
-                            }
-                        }}
-                        startIcon={<FilterListIcon />}
-                        endIcon={openFilter ? <ExpandLess /> : <ExpandMore />}
-                    >
-                        Search Filters
-                    </Button>
+    // ========== Loading State ==========
+    if (isAuthenticating) {
+        return (
+            <Container maxWidth="xl" sx={{ py: 3 }}>
+                <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
+                    <CircularProgress />
+                    <Typography sx={{ ml: 2 }}>Loading dashboard...</Typography>
                 </Box>
+            </Container>
+        );
+    }
 
-                {/* --- Collapsible Filter Area --- */}
-                <Collapse in={openFilter} unmountOnExit>
-                    <Box
-                        component="form" // Use form element for semantic correctness
-                        onSubmit={formik.handleSubmit} // Handle submission via formik
-                        sx={{
-                            p: 2.5, // Slightly more padding
-                            mb: 3,
-                            border: `1px solid ${theme.palette.divider}`,
-                            borderRadius: theme.shape.borderRadius,
-                            bgcolor: 'background.paper'
-                        }}
-                    >
-                        <Grid container spacing={2.5} alignItems="center"> {/* Increased spacing */}
+    if (!verifiedUser) {
+        return (
+            <Container maxWidth="xl" sx={{ py: 3 }}>
+                <Card sx={{ p: 5, textAlign: "center" }}>
+                    <Typography variant="h5" color="error">User Not Authenticated</Typography>
+                    <Typography variant="body1">Please login to view your dashboard.</Typography>
+                    <Button variant="contained" sx={{ mt: 2 }} onClick={() => window.location.href = "/login"}>Go to Login</Button>
+                </Card>
+            </Container>
+        );
+    }
 
-                            {/* Row 1: Visit Type Radios */}
-                            <Grid item xs={12}>
-                                <FormControl component="fieldset">
-                                    <RadioGroup row name="visitType" value={selectedVisitType} onChange={handleVisitTypeChange}>
-                                        <FormControlLabel value="newVisit" control={<Radio size="small" />} label="New Visit" />
-                                        <FormControlLabel value="followUpVisit" control={<Radio size="small" />} label="Follow Up Visit" />
-                                        <FormControlLabel value="visitStatusUpdate" control={<Radio size="small" />} label="Visit Status Update" />
-                                    </RadioGroup>
-                                </FormControl>
+    // ========== RENDER ADMIN DASHBOARD (userType !== '11') ==========
+    if (userType !== '11') {
+        return (
+            <Box sx={{ width: "100%", mt: 2 }}>
+                {renderStatusModal()}
+                <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={() => setSnackbar({ ...snackbar, open: false })}>
+                    <Alert severity={snackbar.severity}>{snackbar.message}</Alert>
+                </Snackbar>
+                
+                <Paper elevation={3} sx={{ width: "100%", overflow: "hidden", p: { xs: 1.5, md: 3 } }}>
+                    {/* Status Cards */}
+                    <Grid container spacing={3} sx={{ mb: 4, px: 2 }}>
+                        {[
+                            { type: 'registration' as StatusModalType, label: "Registration", value: statusCounts.registration.count, icon: <PersonAddAltIcon />, gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
+                            { type: 'new' as StatusModalType, label: "New Visit", value: statusCounts.new.count, icon: <FiberNewIcon />, gradient: 'linear-gradient(135deg, #48bb78 0%, #38a169 100%)' },
+                            { type: 'revisit' as StatusModalType, label: "Revisit", value: statusCounts.revisit.count, icon: <RepeatIcon />, gradient: 'linear-gradient(135deg, #ed8936 0%, #dd6b20 100%)' },
+                            { type: 'checkout' as StatusModalType, label: "Checkout", value: statusCounts.checkout.count, icon: <CheckCircleOutlineIcon />, gradient: 'linear-gradient(135deg, #4299e1 0%, #3182ce 100%)' },
+                        ].map((status, idx) => (
+                            <Grid item xs={12} sm={6} md={3} key={idx}>
+                                <Card 
+                                // onClick={() => handleStatusCardClick(status.type)}
+                                 sx={{ cursor: 'pointer', background: status.gradient, color: 'white', p: 2, '&:hover': { transform: 'translateY(-4px)' } }}>
+                                    <Box display="flex" justifyContent="space-between">
+                                        <Box sx={{ p: 1.5, background: 'rgba(255,255,255,0.2)', borderRadius: 2 }}>{React.cloneElement(status.icon, { sx: { fontSize: 28 } })}</Box>
+                                    </Box>
+                                    <Typography variant="subtitle2" sx={{ mt: 2, opacity: 0.9 }}>{status.label}</Typography>
+                                    <Typography variant="h4" fontWeight="bold">{status.value} <Typography component="span" variant="body2">Patients</Typography></Typography>
+                                </Card>
                             </Grid>
+                        ))}
+                    </Grid>
 
-                            <Grid item xs={12}><Divider sx={{ my: 1 }} /></Grid>
-
-                            <Grid item xs={12} sm={6} md={3}>
-                                <TextField
-                                    fullWidth
-                                    id="fromDate"
-                                    name="fromDate" // Name should match formik value
-                                    label="From Date"
-                                    type="date"
-                                    InputLabelProps={{ shrink: true }}
-                                    size="small"
-                                    variant="outlined"
-                                    value={formik.values.fromDate}
-                                    onChange={formik.handleChange}
-                                    error={formik.touched.fromDate && Boolean(formik.errors.fromDate)}
-                                    helperText={formik.touched.fromDate && formik.errors.fromDate}
-                                />
-                            </Grid>
-
-                            <Grid item xs={12} sm={6} md={3}>
-                                <TextField
-                                    fullWidth
-                                    id="toDate"
-                                    name="toDate" // Name should match formik value
-                                    label="To Date"
-                                    type="date"
-                                    InputLabelProps={{ shrink: true }}
-                                    size="small"
-                                    variant="outlined"
-                                    value={formik.values.toDate}
-                                    onChange={formik.handleChange}
-                                    error={formik.touched.toDate && Boolean(formik.errors.toDate)}
-                                    helperText={formik.touched.toDate && formik.errors.toDate}
-                                />
-                            </Grid>
-                            {/* Row 3: Patient Identifiers */}
-
-                            <Grid item xs={12} sm={6} md={3}>
-                                <TextField fullWidth label="Patient No" size="small" variant="outlined" id="peteintNo" name="peteintNo" value={formik.values.peteintNo} onChange={formik.handleChange} />
-                            </Grid>
-                            <Grid item xs={12} sm={6} md={3}>
-                                <TextField fullWidth label="Patient Name" size="small" variant="outlined" id="name" name="name" value={formik.values.name} onChange={formik.handleChange} />
-                            </Grid>
-
-                            <Grid item xs={12} sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end', gap: 1.5 }}>
-                                <Button
-                                    variant="outlined"
-                                    color="secondary"
-                                    onClick={handleClearFilters}
-                                    startIcon={<ClearAllIcon />}
-                                >
-                                    Clear
-                                </Button>
-                                <Button
-                                    type="submit" // Submit the formik form
-                                    variant="contained"
-                                    color="primary"
-                                    disabled={isLoading} // Disable button while loading
-                                    startIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : <SearchIcon />}
-                                >
-                                    Apply Filters
-                                </Button>
-                            </Grid>
-                        </Grid>
+                    {/* Filters */}
+                    <Box sx={{ mb: 2 }}>
+                        <Button onClick={() => setOpenFilter(!openFilter)} variant="contained" color="secondary" fullWidth startIcon={<FilterListIcon />} endIcon={openFilter ? <ExpandLess /> : <ExpandMore />}>
+                            Search Filters
+                        </Button>
                     </Box>
-                </Collapse>
 
-                {/* --- Patient List Section --- */}
-                <Typography variant="h6" gutterBottom sx={{ mb: 2, mt: openFilter ? 0 : 2 }}>
-                    Patient List ({patientList.length} found)
-                </Typography>
+                    <Collapse in={openFilter}>
+                        <Box component="form" onSubmit={formik.handleSubmit} sx={{ p: 2.5, mb: 3, border: `1px solid ${theme.palette.divider}`, borderRadius: 1 }}>
+                            <Grid container spacing={2}>
+                                <Grid item xs={12}>
+                                    <RadioGroup row value={selectedVisitType} onChange={handleVisitTypeChange}>
+                                        <FormControlLabel value="newVisit" control={<Radio />} label="New Visit" />
+                                        <FormControlLabel value="followUpVisit" control={<Radio />} label="Follow Up Visit" />
+                                        <FormControlLabel value="visitStatusUpdate" control={<Radio />} label="Visit Status Update" />
+                                    </RadioGroup>
+                                </Grid>
+                                <Grid item xs={12}><Divider /></Grid>
+                                <Grid item xs={12} sm={6} md={3}>
+                                    <TextField fullWidth name="fromDate" label="From Date" type="date" size="small" InputLabelProps={{ shrink: true }} value={formik.values.fromDate} onChange={formik.handleChange} />
+                                </Grid>
+                                <Grid item xs={12} sm={6} md={3}>
+                                    <TextField fullWidth name="toDate" label="To Date" type="date" size="small" InputLabelProps={{ shrink: true }} value={formik.values.toDate} onChange={formik.handleChange} />
+                                </Grid>
+                                <Grid item xs={12} sm={6} md={3}>
+                                    <TextField fullWidth label="Patient No" size="small" name="peteintNo" value={formik.values.peteintNo} onChange={formik.handleChange} />
+                                </Grid>
+                                <Grid item xs={12} sm={6} md={3}>
+                                    <TextField fullWidth label="Patient Name" size="small" name="name" value={formik.values.name} onChange={formik.handleChange} />
+                                </Grid>
+                                <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1.5 }}>
+                                    <Button variant="outlined" onClick={handleClearFilters} startIcon={<ClearAllIcon />}>Clear</Button>
+                                    <Button type="submit" variant="contained" disabled={isLoading} startIcon={isLoading ? <CircularProgress size={20} /> : <SearchIcon />}>Apply Filters</Button>
+                                </Grid>
+                            </Grid>
+                        </Box>
+                    </Collapse>
 
-                <TableContainer component={Paper} elevation={2} sx={{ maxHeight: 600 }}> {/* Added Max Height for scroll */}
-                    <Table stickyHeader sx={{ minWidth: 650 }} aria-label="patient list table" size="small">
-                        <TableHead>
-                            <TableRow sx={{ '& th': { backgroundColor: theme.palette.primary.light, color: theme.palette.primary.contrastText, fontWeight: 'bold' } }}>
-                                <TableCell>Patient No</TableCell>
-                                <TableCell>Name</TableCell>
-                                <TableCell>Case No</TableCell>
-                                <TableCell align="center">VIP</TableCell>
-                                <TableCell>D.O.B</TableCell>
-                                <TableCell>Age</TableCell>
-                                <TableCell align="center">Gender</TableCell>
-                                <TableCell>Blood Group</TableCell>
-                                <TableCell>Mobile Number</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {isLoading ? (
-                                <TableRow>
-                                    <TableCell colSpan={10} align="center" sx={{ py: 4 }}>
-                                        <CircularProgress />
-                                        <Typography>Loading Patients...</Typography>
-                                    </TableCell>
+                    {/* Patient List */}
+                    <Typography variant="h6" gutterBottom>Patient List ({patientList.length} found)</Typography>
+                    <TableContainer component={Paper} sx={{ maxHeight: 600 }}>
+                        <Table stickyHeader size="small">
+                            <TableHead>
+                                <TableRow sx={{ '& th': { bgcolor: theme.palette.primary.light, color: 'white', fontWeight: 'bold' } }}>
+                                    <TableCell>Patient No</TableCell><TableCell>Name</TableCell><TableCell>Case No</TableCell><TableCell align="center">VIP</TableCell><TableCell>D.O.B</TableCell><TableCell>Age</TableCell><TableCell align="center">Gender</TableCell><TableCell>Blood Group</TableCell><TableCell>Mobile Number</TableCell>
                                 </TableRow>
-                            ) : displayedPatients.length > 0 ? (
-                                displayedPatients.map((patient: any) => (
-                                    <TableRow
-                                        key={patient.patientID}
-                                        hover
-                                        sx={{ '&:last-child td, &:last-child th': { border: 0 }, '&:hover': { backgroundColor: 'action.hover' } }}
-                                    >
-                                        <TableCell component="th" scope="row">{patient.patientNo}</TableCell>
-                                        <TableCell>{patient.candName}</TableCell>
-                                        <TableCell>{patient.patientCaseNo || '-'}</TableCell>
-                                        <TableCell align="center">
-                                            {patient.isVIP ? (
-                                                <Tooltip title="VIP Patient">
-                                                    <StarIcon color="warning" fontSize="small" />
-                                                </Tooltip>
-                                            ) : '-'}
-                                        </TableCell>
-                                        <TableCell component="th" scope="row">{patient.dob}</TableCell>
-                                        <TableCell>{patient.age}</TableCell>
-                                        <TableCell>{patient.genderName || '-'}</TableCell>
-                                        <TableCell component="th" scope="row">{patient.bloodGroup}</TableCell>
-                                        <TableCell>{patient.curMobileNo}</TableCell>
+                            </TableHead>
+                            <TableBody>
+                                {isLoading ? (
+                                    <TableRow><TableCell colSpan={9} align="center"><CircularProgress /><Typography>Loading Patients...</Typography></TableCell></TableRow>
+                                ) : displayedPatients.length > 0 ? (
+                                    displayedPatients.map((patient: any) => (
+                                        <TableRow key={patient.patientID} hover>
+                                            <TableCell>{patient.patientNo}</TableCell>
+                                            <TableCell>{patient.candName}</TableCell>
+                                            <TableCell>{patient.patientCaseNo || '-'}</TableCell>
+                                            <TableCell align="center">{patient.isVIP ? <StarIcon color="warning" /> : '-'}</TableCell>
+                                            <TableCell>{patient.dob}</TableCell>
+                                            <TableCell>{patient.age}</TableCell>
+                                            <TableCell>{patient.genderName || '-'}</TableCell>
+                                            <TableCell>{patient.bloodGroup}</TableCell>
+                                            <TableCell>{patient.curMobileNo}</TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow><TableCell colSpan={9} align="center"><InfoOutlinedIcon sx={{ fontSize: 40 }} /><Typography>No Patient Data Found</Typography></TableCell></TableRow>
+                                )}
+                            </TableBody>
+                            {patientList.length > 0 && (
+                                <TableFooter>
+                                    <TableRow>
+                                        <TablePagination rowsPerPageOptions={[10, 25, 50]} colSpan={9} count={patientList.length} rowsPerPage={adminRowsPerPage} page={adminPage} onPageChange={handleChangeAdminPage} onRowsPerPageChange={handleChangeAdminRowsPerPage} />
                                     </TableRow>
-                                ))
-                            ) : (
-                                // No Data Found Row (when not loading)
-                                <TableRow>
-                                    <TableCell colSpan={10} align="center" sx={{ py: 4 }}>
-                                        <Box
-                                            sx={{
-                                                display: "flex",
-                                                flexDirection: 'column',
-                                                alignItems: "center",
-                                                color: "text.secondary",
-                                            }}
-                                        >
-                                            <InfoOutlinedIcon sx={{ fontSize: 40, mb: 1 }} />
-                                            <Typography variant="subtitle1">
-                                                No Patient Data Found
-                                            </Typography>
-                                            <Typography variant="body2">
-                                                Try adjusting your filters or check if patients match the criteria.
-                                            </Typography>
-                                        </Box>
-                                    </TableCell>
-                                </TableRow>
+                                </TableFooter>
                             )}
-                            {emptyRows > 0 && !isLoading && displayedPatients.length > 0 && (
-                                <TableRow style={{ height: 41 * emptyRows }}> {/* Adjust height based on your row height */}
-                                    <TableCell colSpan={10} />
-                                </TableRow>
-                            )}
-                        </TableBody>
-                        {patientList.length > 0 && !isLoading && (
-                            <TableFooter>
-                                <TableRow>
-                                    <TablePagination
-                                        rowsPerPageOptions={[10, 25, 50, { label: 'All', value: -1 }]}
-                                        colSpan={10}
-                                        count={patientList.length}
-                                        rowsPerPage={rowsPerPage}
-                                        page={page}
-                                        SelectProps={{
-                                            inputProps: { 'aria-label': 'rows per page' },
-                                            native: true,
-                                        }}
-                                        onPageChange={handleChangePage}
-                                        onRowsPerPageChange={handleChangeRowsPerPage}
-                                        sx={{ borderTop: `1px solid ${theme.palette.divider}` }} // Add 
-                                    />
-                                </TableRow>
-                            </TableFooter>
-                        )}
-                    </Table>
-                </TableContainer>
-            </Paper>
-        </Box>
+                        </Table>
+                    </TableContainer>
+                </Paper>
+            </Box>
+        );
+    }
+
+    // ========== RENDER CANDIDATE DASHBOARD (userType === '11') ==========
+    return (
+        <Container maxWidth="xl" sx={{ py: 3, minHeight: "100vh" }}>
+            <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={() => setSnackbar({ ...snackbar, open: false })}>
+                <Alert severity={snackbar.severity}>{snackbar.message}</Alert>
+            </Snackbar>
+
+            <Dialog open={showPdf} onClose={() => setShowPdf(false)} maxWidth="lg" fullWidth>
+                <DialogTitle>Appointment Report<MuiIconButton onClick={() => setShowPdf(false)} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></MuiIconButton></DialogTitle>
+                <DialogContent>{base64Data && <embed type="application/pdf" height="600" width="100%" src={`data:application/pdf;base64,${base64Data}`} />}</DialogContent>
+            </Dialog>
+
+            <div hidden id="printData">
+                <Box sx={{ p: 3, border: "1px solid black", borderRadius: 2, maxWidth: 800, mx: "auto" }}>
+                    <Typography variant="h4" align="center">Multifacet Systems Software Pvt Ltd</Typography>
+                    <Typography variant="h5" align="center" color="primary">BR Super Specialty Hospital</Typography>
+                    <Divider sx={{ my: 2 }} />
+                    <Grid container spacing={2}>
+                        <Grid item xs={6}><strong>Doctor Name:</strong> {printDataRecord?.doctorName}</Grid>
+                        <Grid item xs={6}><strong>Patient Name:</strong> {selectedRows?.fName} {selectedRows?.lName}</Grid>
+                        <Grid item xs={6}><strong>Patient No:</strong> {printDataRecord?.patientNo}</Grid>
+                        <Grid item xs={6}><strong>Slot Date:</strong> {printDataRecord?.slotDateVar}</Grid>
+                        <Grid item xs={6}><strong>Slot Time:</strong> {printDataRecord?.slotTimeVar}</Grid>
+                        <Grid item xs={6}><strong>Week:</strong> {printDataRecord?.weekName}</Grid>
+                        <Grid item xs={12}><strong>Slot Expired:</strong> {printDataRecord?.isExpired ? "Yes" : "No"}</Grid>
+                    </Grid>
+                    <Divider sx={{ my: 2 }} />
+                    <Typography variant="body2" align="center">Thank you for being a customer with us!</Typography>
+                </Box>
+            </div>
+
+            {candidateLoading && Object.keys(selectedRows).length === 0 ? (
+                <Box display="flex" justifyContent="center" minHeight="60vh"><CircularProgress /></Box>
+            ) : (
+                <>
+                    {/* Profile Card */}
+                    <Card sx={{ mb: 4, borderRadius: 3 }}>
+                        <CardContent>
+                            <Box display="flex" flexDirection="column" alignItems="center" mb={3}>
+                                <Box position="relative" display="inline-flex">
+                                    <CircularProgress variant="determinate" value={selectedRows?.profilePercentage || 0} size={160} thickness={4} />
+                                    <Box position="absolute" top={0} left={0} bottom={0} right={0} display="flex" alignItems="center" justifyContent="center">
+                                        <Avatar src={selectedRows?.profileImage ? `data:image/png;base64,${selectedRows.profileImage}` : undefined} sx={{ width: 145, height: 145 }}>{selectedRows?.fName?.charAt(0) || "U"}</Avatar>
+                                    </Box>
+                                </Box>
+                                <Typography variant="h4">{`${selectedRows?.fName || ""} ${selectedRows?.mName || ""} ${selectedRows?.lName || ""}`}</Typography>
+                            </Box>
+                            <Divider><Chip label="Basic Information" /></Divider>
+                            <Grid container spacing={2} sx={{ mt: 1 }}>
+                                <Grid item xs={12} sm={6} md={3}><Typography variant="caption">First Name</Typography><Typography variant="body1">{selectedRows?.fName || "-"}</Typography></Grid>
+                                <Grid item xs={12} sm={6} md={3}><Typography variant="caption">Middle Name</Typography><Typography variant="body1">{selectedRows?.mName || "-"}</Typography></Grid>
+                                <Grid item xs={12} sm={6} md={3}><Typography variant="caption">Last Name</Typography><Typography variant="body1">{selectedRows?.lName || "-"}</Typography></Grid>
+                                <Grid item xs={12} sm={6} md={3}><Typography variant="caption">Mobile No</Typography><Typography variant="body1">{selectedRows?.curMobileNo || "-"}</Typography></Grid>
+                                <Grid item xs={12} sm={6} md={3}><Typography variant="caption">Date of Birth</Typography><Typography variant="body1">{selectedRows?.dob || "-"}</Typography></Grid>
+                            </Grid>
+                        </CardContent>
+                    </Card>
+
+                    {/* Appointment List */}
+                    <Card sx={{ mb: 4 }}>
+                        <CardHeader title="Appointment List" action={<IconButton onClick={handlePrintReport}><DownloadOutlined /></IconButton>} />
+                        <Divider />
+                        <CardContent>
+                            <TableContainer>
+                                <Table size="small">
+                                    <TableHead>
+                                        <TableRow><TableCell><b>Doctor Name</b></TableCell><TableCell><b>Patient No</b></TableCell><TableCell><b>Slot Date</b></TableCell><TableCell><b>Slot Time</b></TableCell><TableCell><b>Week</b></TableCell><TableCell><b>Slot Expired</b></TableCell><TableCell><b>Print</b></TableCell></TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {displayedAppointments.map((app, idx) => (
+                                            <TableRow key={idx} hover>
+                                                <TableCell>{app.doctorName}</TableCell>
+                                                <TableCell>{app.patientNo}</TableCell>
+                                                <TableCell>{app.slotDateVar}</TableCell>
+                                                <TableCell>{app.slotTimeVar}</TableCell>
+                                                <TableCell>{app.weekName}</TableCell>
+                                                <TableCell><Chip label={app.isExpired ? "Yes" : "No"} color={app.isExpired ? "error" : "success"} size="small" /></TableCell>
+                                                <TableCell><IconButton size="small" onClick={() => handlePrint(app)}><PrintOutlined /></IconButton></TableCell>
+                                            </TableRow>
+                                        ))}
+                                        {emptyRows > 0 && <TableRow style={{ height: 53 * emptyRows }}><TableCell colSpan={7} /></TableRow>}
+                                        {displayedAppointments.length === 0 && !candidateLoading && <TableRow><TableCell colSpan={7} align="center"><Typography color="textSecondary">No appointments found</Typography></TableCell></TableRow>}
+                                    </TableBody>
+                                    {appointmentHistory.length > 0 && (
+                                        <TableFooter>
+                                            <TableRow><TablePagination rowsPerPageOptions={[5, 10, 25]} colSpan={7} count={appointmentHistory.length} rowsPerPage={candidateRowsPerPage} page={candidatePage} onPageChange={handleChangeCandidatePage} onRowsPerPageChange={handleChangeCandidateRowsPerPage} /></TableRow>
+                                        </TableFooter>
+                                    )}
+                                </Table>
+                            </TableContainer>
+                        </CardContent>
+                    </Card>
+
+                    {/* Patient Visits */}
+                    <Card sx={{ mb: 4 }}>
+                        <CardHeader title="Patient Visits" />
+                        <Divider />
+                        <CardContent>
+                            <TableContainer>
+                                <Table size="small">
+                                    <TableHead>
+                                        <TableRow><TableCell><b>Doctor Name</b></TableCell><TableCell><b>Patient Case No</b></TableCell><TableCell><b>Admission No</b></TableCell><TableCell><b>Visit Date</b></TableCell><TableCell><b>Type Name</b></TableCell><TableCell><b>Consultancy Paid</b></TableCell></TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {patientVisits.map((visit, idx) => (
+                                            <TableRow key={idx} hover>
+                                                <TableCell>{visit.doctorName}</TableCell>
+                                                <TableCell>{visit.patientCaseNo}</TableCell>
+                                                <TableCell>{visit.admNo}</TableCell>
+                                                <TableCell>{visit.actualVisitDateVar}</TableCell>
+                                                <TableCell>{visit.vPreEmpTypeName}</TableCell>
+                                                <TableCell><Chip label={visit.isConsultencyPaid ? "Yes" : "No"} color={visit.isConsultencyPaid ? "success" : "error"} size="small" /></TableCell>
+                                            </TableRow>
+                                        ))}
+                                        {patientVisits.length === 0 && !candidateLoading && <TableRow><TableCell colSpan={6} align="center"><Typography color="textSecondary">No patient visits found</Typography></TableCell></TableRow>}
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
+                        </CardContent>
+                    </Card>
+
+                    {/* Chart */}
+                    <Card>
+                        <CardHeader title="Analysis of Visits" />
+                        <Divider />
+                        <CardContent>
+                            <Box display="flex" justifyContent="center" minHeight={400}>
+                                <PieChart series={[{ data: pieChartData, highlightScope: { faded: "global", highlighted: "item" }, faded: { innerRadius: 30, additionalRadius: -30, color: "gray" } }]} height={400} width={500} slotProps={{ legend: { direction: "row", position: { vertical: "bottom", horizontal: "middle" }, padding: 0 } }} />
+                            </Box>
+                        </CardContent>
+                    </Card>
+                </>
+            )}
+        </Container>
     );
 }
-
-
-
-

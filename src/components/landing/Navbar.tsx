@@ -3,6 +3,7 @@ import { Activity, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import ThemeSwitcher from "../ThemeSwitcher";
+import hospital_LOGO from "../../assets/images/hospital_LOGO.png";
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
@@ -30,10 +31,18 @@ const Navbar = () => {
         
         {/* Logo */}
         <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
-          <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'linear-gradient(135deg, #38bdf8, #6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Activity color="white" size={20} />
-          </div>
-          <span style={{ fontWeight: 800, fontSize: '22px', color: '#0f172a', letterSpacing: '-0.5px' }}>MediFlow</span>
+<img 
+  src={hospital_LOGO} 
+  alt="Hospital Logo"
+  style={{ 
+    width: '40px', 
+    height: '40px',
+    borderRadius: '8px',
+    objectFit: 'cover'
+  }} 
+/>
+          <span style={{ fontWeight: 800, fontSize: '22px', color: '#0f172a', letterSpacing: '-0.5px' }}>Vaidhyaraj Madan Mohan Singh Portal
+</span>
         </Link>
 
         {/* Desktop Menu */}
